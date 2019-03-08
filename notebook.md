@@ -17,3 +17,7 @@
 # Week 02/15/2019 - 02/21/2019
 * Readings: IaaS
 - Libcloud on AWS
+
+# Week 03/01/2019 - 03/07/2019
+- Project: dockpot
+- cloudmesh cm: modified cloudmesh-community/cm/cloudmesh/compute/libcloud/Provider.py
