@@ -5,3 +5,5 @@ owner:
   hid: sp19-516-131
   community: e516
   semester: sp19
+project:
+    dockpot: https://github.com/cloudmesh-community/sp19-516-131/project/dockpot
