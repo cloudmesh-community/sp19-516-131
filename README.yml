@@ -6,6 +6,6 @@ owner:
     community: e516
     semester: sp19
 project:
-    libcloud provider: https://github.com/hyspoc/cm/blob/master/cloudmesh/compute/libcloud/Provider.py
-section:
-    git: ./section/
+    - title:
+      url: https://github.com/hyspoc/cm/blob/master/cloudmesh/compute/libcloud/Provider.py
+
