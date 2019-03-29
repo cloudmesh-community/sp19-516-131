@@ -17,6 +17,10 @@ class Demo():
         self.IMAGE_ID = default['image']
         self.SIZE_ID = default['size']
 
+        print('this is gonna take a while')
+        images = self.driver.list_images()
+        sizes = self.driver.list_sizes()
+
         cls = get_driver(Provider.EC2)
         self.driver = cls(self.ACCESS_ID, self.SECRET_KEY, region = self.REGION)
 
@@ -29,9 +33,6 @@ class Demo():
     def create(self, name, image_id, size_id):
         image_id = self.IMAGE_ID
         size_id = self.SIZE_ID
-
-        images = self.driver.list_images()
-        sizes = self.driver.list_sizes()
 
         image = [i for i in images if i.id == image_id][0]
         size = [s for s in sizes if s.id == size_id][0]
