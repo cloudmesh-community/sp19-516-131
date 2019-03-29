@@ -1,4 +1,4 @@
-Last Updated: Thursday 03/28/2019
+Last Updated: Friday 03/29/2019
 
 modified project-code/cloudmesh.aws/cloudmesh/aws/api/manager.py to Provider.py.
 inherits Provider from cloudmesh.compute.libcloud Provider,
@@ -7,6 +7,11 @@ can utilize public provider, easier for manual merge later.
 
 modified methods find() and info()'s parameter name to names
 such that the functions can work on a list of names
+
+modifed method get_publicIP() to list ips from node names
+method in cm/../Provider lists all ips from server
+
+created ping() with multiprocessing.
 
 examples:
 aws list
