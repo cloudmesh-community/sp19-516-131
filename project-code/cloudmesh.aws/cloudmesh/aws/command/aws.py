@@ -8,6 +8,7 @@ from cloudmesh.common.Printer import Printer
 from cloudmesh.common.console import Console
 from cloudmesh.common.parameter import Parameter
 
+# from cloudmesh.aws.api.manager import Manager
 from cloudmesh.aws.api.Provider import Provider
 
 from cloudmesh.management.configuration.config import Active
@@ -85,14 +86,14 @@ class AwsCommand(PluginCommand):
             pprint(provider.get_publicIPs(names))
 
         elif arguments.ping:
-            ## if given node names
             timeout = int(arguments['--wait'])
 
+            # if given node names
             if arguments['-n']:
                 names = Parameter.expand(arguments.NAMES)
                 public_ips = list(provider.get_publicIPs(names).values())
                 public_ips = [i[0] for i in public_ips] #flatten
-            ## if given ips
+            # if given ips
             if arguments['-p']:
                 public_ips = Parameter.expand(arguments.IPS)
             provider.ping(public_ips, timeout=timeout)

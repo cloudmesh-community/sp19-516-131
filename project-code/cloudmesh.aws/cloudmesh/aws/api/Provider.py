@@ -50,11 +50,22 @@ class Provider(LibCloudProvider):
             return None
 
     def get_publicIPs(self, names=None):
-        # return list(map(lambda x : x['public_ips'], self.info(names)))
-        # return map(lambda x : dict(x['name'], x['public_ips']), self.info(names))
+        """
+        get public ip addresses of a given list of nodes
+
+        :param names: list of node names
+        :return: A dict representing the public ips
+        """
         return dict((x['name'], x['public_ips']) for x in self.info(names))
 
     def __partial_ping__(self, ip, timeout=None):
+        """
+        ping a vm from given ip address
+
+        :param ip: str of ip address
+        :param timeout: given in seconds. if timeout expires, the process is killed
+        :return: a str representing the ping result
+        """
         param = '-n' if platform.system().lower()=='windows' else '-c'
         command = ['ping', param, '1', ip]
         ret_code = run(command, capture_output=False).returncode
@@ -65,26 +76,19 @@ class Provider(LibCloudProvider):
             return "\n\x1b[0;30;41m Ping" + ip + " Failure. Return code:" + str(ret_code) + " \x1b[0m"
 
     def ping(self, public_ips=None, timeout=None):
+        """
+        ping a list of given ip addresses
+
+        :param public_ips: a list of ip addresses
+        :param timeout: given in seconds. if timeout expires, a process is killed
+        :return: none
+        """
         ###                                    ###
         ### need to check security group first ###
         ###                                    ###
         with Pool(len(public_ips)) as p:
             res = p.map(self.__partial_ping__, public_ips)
         list(map(print, res))
-
-        # for ips in public_ips:
-        #     for ip in ips:
-        #         print("---------------------------------------------------------------")
-        #         param = '-n' if platform.system().lower()=='windows' else '-c'
-        #         command = ['ping', param, '1', ip]
-        #         ret_code = run(command, capture_output=False).returncode
-        #         if ret_code == 0:
-        #             print("\n\x1b[6;30;42mPing", ip, "Successful\x1b[0m")
-        #         else:
-        #             print("\n\x1b[0;30;41mPing", ip, "Failed. Return code:", ret_code, "\x1b[0m")
-        #         print("---------------------------------------------------------------")
-
-## need to test start function
 
 # p = Provider()
 # names = ['t1', 't2']
