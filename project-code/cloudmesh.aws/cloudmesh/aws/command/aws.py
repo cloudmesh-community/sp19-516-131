@@ -35,8 +35,8 @@ class AwsCommand(PluginCommand):
                 aws list
                 aws info [NAMES]
                 aws ip show [NAMES]
-                aws ping -n [--wait=TIMEOUT] [NAMES]
-                aws ping -p [--wait=TIMEOUT] [IPS]
+                aws ping [--timer=TIMEOUT]
+                         [--name=NAMES]
                 aws ppp
 
           Arguments:
@@ -45,10 +45,8 @@ class AwsCommand(PluginCommand):
 
           Options:
                 -f    specify the file
-                -p    specify ip addresses
-                -n    specify vm names
-                -wait=TIMEOUT    specify the wait time for processes
-
+                --name=NAMES    give the name of the virtual machine
+                --timer=TIMEOUT    specify the wait time for processes
 
           Description:
                 commands used to boot, start or delete servers of a cloud
@@ -65,7 +63,7 @@ class AwsCommand(PluginCommand):
 
         variables = Variables()
 
-        # pprint(arguments)
+        pprint(arguments)
 
         provider = Provider()
 
@@ -86,17 +84,36 @@ class AwsCommand(PluginCommand):
             pprint(provider.get_publicIPs(names))
 
         elif arguments.ping:
-            timeout = int(arguments['--wait'])
+            print('ping')
+            variable = Variables()
 
-            # if given node names
-            if arguments['-n']:
-                names = Parameter.expand(arguments.NAMES)
-                public_ips = list(provider.get_publicIPs(names).values())
-                public_ips = [i[0] for i in public_ips] #flatten
-            # if given ips
-            if arguments['-p']:
-                public_ips = Parameter.expand(arguments.IPS)
-            provider.ping(public_ips, timeout=timeout)
+            names = Parameter.expand(arguments['--name'])
+            if names == None:
+                names = variable['vm']
+            else:
+                variable['vm'] = arguments['--name']
+
+            timer = Parameter.expand(arguments['--timer'])
+            if timer == None:
+                timer = variable['timer']
+            else:
+                variable['timer'] = arguments['--timer']
+
+            public_ips = list(provider.get_publicIPs(names).values())
+            public_ips = [i[0] for i in public_ips] #flatten
+
+            def f(x):
+                if x[1] == 0:
+                    Console.ok("ping " + x[0] + ' successful.')
+                else:
+                    Console.error("ping " + x[0] + ' failure. return code: ' + str(x[1]))
+
+            list(map(f, provider.ping(public_ips, timeout=timer)))
 
         else:
+            # variable = Variables()
+            # print(variable['vm'])
+            # for k in variable:
+            #     print(k)
+            # print(variable.vm)
             Console.error("function not available")

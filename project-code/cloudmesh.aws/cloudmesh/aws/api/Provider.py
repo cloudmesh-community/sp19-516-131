@@ -69,11 +69,7 @@ class Provider(LibCloudProvider):
         param = '-n' if platform.system().lower()=='windows' else '-c'
         command = ['ping', param, '1', ip]
         ret_code = run(command, capture_output=False).returncode
-        # return ip, ret_code
-        if ret_code == 0:
-            return "\n\x1b[6;30;42m Ping " + ip + " Successful \x1b[0m"
-        else:
-            return "\n\x1b[0;30;41m Ping" + ip + " Failure. Return code:" + str(ret_code) + " \x1b[0m"
+        return ip, ret_code
 
     def ping(self, public_ips=None, timeout=None):
         """
@@ -88,11 +84,4 @@ class Provider(LibCloudProvider):
         ###                                    ###
         with Pool(len(public_ips)) as p:
             res = p.map(self.__partial_ping__, public_ips)
-        list(map(print, res))
-
-# p = Provider()
-# names = ['t1', 't2']
-# ips = [['54.212.216.196'], ['54.245.42.58']]
-# # pprint(p.info(names))
-# # pprint(p.ping(['t1', 't2']))
-# p.ping(ips)
+        return res
