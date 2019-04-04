@@ -13,9 +13,15 @@ method in cm/../Provider lists all ips from server
 
 created ping() with multiprocessing.
 
-examples:
+commands:
 aws list
 aws ip show t1
 aws ip show t1,t2
 aws ping -n t1,t2 --wait=10
 aws ping -p 54.212.216.196,54.245.42.58 --wait=10
+
+Last Updated: Thursday 04/04/2019
+
+commands
+aws flavor list
+aws image list
