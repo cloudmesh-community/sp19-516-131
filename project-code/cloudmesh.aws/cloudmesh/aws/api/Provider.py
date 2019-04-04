@@ -34,6 +34,22 @@ class Provider(LibCloudProvider):
         """
         return self.find(self.list(), names=names)
 
+    def images(self, raw=False, ex_image_ids=None):
+        """
+        Lists the images on the cloud
+        :param raw: If raw is set to True the lib cloud object is returned
+                    otherwise a dict is returened.
+        :return: dict or libcloud object
+        """
+        if self.cloudman:
+            entries = self.cloudman.list_images(ex_image_ids=ex_image_ids)
+            if raw:
+                return entries
+            else:
+                return self.update_dict(entries, kind="image")
+
+        return None
+
     def apply(self, fname, names):
         """
         apply a function to a given list of nodes
@@ -64,11 +80,11 @@ class Provider(LibCloudProvider):
 
         :param ip: str of ip address
         :param timeout: given in seconds. if timeout expires, the process is killed
-        :return: a str representing the ping result
+        :return: a tuple representing the ping result
         """
         param = '-n' if platform.system().lower()=='windows' else '-c'
         command = ['ping', param, '1', ip]
-        ret_code = run(command, capture_output=False).returncode
+        ret_code = run(command, capture_output=False, timeout=timeout).returncode
         return ip, ret_code
 
     def ping(self, public_ips=None, timeout=None):
@@ -77,7 +93,7 @@ class Provider(LibCloudProvider):
 
         :param public_ips: a list of ip addresses
         :param timeout: given in seconds. if timeout expires, a process is killed
-        :return: none
+        :return: A list of tuples representing the ping result
         """
         ###                                    ###
         ### need to check security group first ###
@@ -85,3 +101,71 @@ class Provider(LibCloudProvider):
         with Pool(len(public_ips)) as p:
             res = p.map(self.__partial_ping__, public_ips)
         return res
+
+    def get_ssh_usernames(self, names=None):
+        """
+        get ssh usernames given node names
+
+                NOT YET IMPLEMENTED
+
+        :param names: A list of node names
+        :return: A dict representing the ssh usernames
+        """
+        ### need to map ssh username according to image id ###
+        return dict((x['name'], "ec2-user") for x in self.info(names))
+
+    def get_dns_names(self, names=None):
+        """
+        get dns names given node names
+
+                NOT YET IMPLEMENTED
+
+        :param names: A list of node names
+        :return: A dict representing the dns names
+        """
+        return dict((x['name'], x['extra']['dns_name']) for x in self.info(names))
+
+    def __partial_check__(self, keypair, location, timeout=None):
+        """
+        check a vm from given keypair and vm location
+
+                IMPLEMENTION IN PROGRESS
+
+        :param keypair: path name to keypair
+        :param location: location of instance, in the form of username@public_dns_name
+        :param timeout: given in seconds. if timeout expires, the process is killed
+        :return: a str representing the check result
+        """
+        # location = username+'@'+dns_name
+        command = ['ssh', '-i', keypair, location]
+        ret_code = run(command, capture_output=False).returncode
+        run(['exit'])
+        return location, ret_code
+
+    def check(self, names=None, keypair=None, timeout=None):
+        """
+        check a list of given node names and keypair
+
+                IMPLEMENTION IN PROGRESS
+
+        :param names: a list of node names
+        :param keypair: path name to keypair
+        :param timeout: given in seconds. if timeout expires, a process is killed
+        :return: A list of tuples representing the check result
+        """
+        user_names = list(self.get_ssh_usernames(names).values())
+        dns_names = list(self.get_dns_names(names).values())
+
+        u = user_names[0]
+        n = dns_names[0]
+        location = u+'@'+n
+        command = ['ssh', '-i', keypair, location]
+        run(command)
+        ### need to figure out how to exit vm once sshed.
+        ret_code = run(['ls', '-a'], capture_output=False).returncode
+        run(['exit'])
+        return ret_code
+        #
+        # with Pool(len(names)) as p:
+        #     res = p.map(lambda u,d : self.__partial_check__(keypair, u+'@'+d ,timeout=timeout), user_names, dns_names)
+        # return res
