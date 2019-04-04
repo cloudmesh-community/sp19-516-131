@@ -32,6 +32,8 @@ class AwsCommand(PluginCommand):
         ::
 
           Usage:
+                aws flavor list
+                aws image list
                 aws list
                 aws info [NAMES]
                 aws ip show [NAMES]
@@ -44,12 +46,17 @@ class AwsCommand(PluginCommand):
                 IPS  ip addresses
 
           Options:
-                -f    specify the file
                 --name=NAMES    give the name of the virtual machine
                 --timer=TIMEOUT    specify the wait time for processes
 
           Description:
                 commands used to boot, start or delete servers of a cloud
+
+                aws list flavors
+                    list the flavors from the cloud
+
+                aws list images
+                    list the images from the cloud
 
                 aws list
                     list the vms on the cloud
@@ -67,24 +74,24 @@ class AwsCommand(PluginCommand):
 
         provider = Provider()
 
-        if arguments.list:
+        if arguments.flavor and arguments.list:
+            pprint(provider.flavors())
+
+        elif arguments.image and arguments.list:
+            pprint(provider.images())
+
+        elif arguments.list:
             pprint(provider.list())
 
         elif arguments.info:
             names = Parameter.expand(arguments.NAMES)
             pprint(provider.info(names))
 
-        # elif arguments.create:
-        #     print("bug in create function")
-        ##     cms aws create --name=test --image=ami-0bbe6b35405ecebdb --flavor=t2.micro
-        #     provider.create(name=arguments.name, image=arguments.image, size=arguments.size)
-
         elif arguments.ip and arguments.show:
             names = Parameter.expand(arguments.NAMES)
             pprint(provider.get_publicIPs(names))
 
         elif arguments.ping:
-            print('ping')
             variable = Variables()
 
             names = Parameter.expand(arguments['--name'])
@@ -102,13 +109,13 @@ class AwsCommand(PluginCommand):
             public_ips = list(provider.get_publicIPs(names).values())
             public_ips = [i[0] for i in public_ips] #flatten
 
-            def f(x):
+            def console_response(x):
                 if x[1] == 0:
                     Console.ok("ping " + x[0] + ' successful.')
                 else:
                     Console.error("ping " + x[0] + ' failure. return code: ' + str(x[1]))
 
-            list(map(f, provider.ping(public_ips, timeout=timer)))
+            list(map(console_response, provider.ping(public_ips, timeout=timer)))
 
         else:
             # variable = Variables()
