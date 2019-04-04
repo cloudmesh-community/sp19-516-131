@@ -35,19 +35,24 @@ class AwsCommand(PluginCommand):
                 aws flavor list
                 aws image list
                 aws list
-                aws info [NAMES]
-                aws ip show [NAMES]
-                aws ping [--timer=TIMEOUT]
-                         [--name=NAMES]
-                aws ppp
+                aws info [--name=NAMES]
+                aws reboot [--name=NAMES]
+                aws ip show [--name=NAMES]
+                aws ping [--name=NAMES]
+                         [--timer=TIMEOUT]
+                aws check [--name=NAMES]
+                          [--keypair_name=KEYPAIR_NAME]
+                          [--timer=TIMEOUT]
+                aws ppp [--name=NAMES]
 
           Arguments:
-                NAMES  server name.
-                IPS  ip addresses
+            NAMES       server name. By default it is set to the name of last vm from database.
+            TIMEOUT     wait time. By default it is set to the last timer used.
+
 
           Options:
-                --name=NAMES    give the name of the virtual machine
-                --timer=TIMEOUT    specify the wait time for processes
+                --name=NAMES        give the name of the virtual machine
+                --timer=TIMEOUT     specify the wait time for processes
 
           Description:
                 commands used to boot, start or delete servers of a cloud
@@ -84,43 +89,46 @@ class AwsCommand(PluginCommand):
             pprint(provider.list())
 
         elif arguments.info:
-            names = Parameter.expand(arguments.NAMES)
+            names = self.get_variables(arguments, variables, '--name', 'vm')
             pprint(provider.info(names))
 
+        elif arguments.reboot:
+            names = self.get_variables(arguments, variables, '--name', 'vm')
+            pprint(provider.reboot(names))
+
         elif arguments.ip and arguments.show:
-            names = Parameter.expand(arguments.NAMES)
+            names = self.get_variables(arguments, variables, '--name', 'vm')
             pprint(provider.get_publicIPs(names))
 
         elif arguments.ping:
-            variable = Variables()
-
-            names = Parameter.expand(arguments['--name'])
-            if names == None:
-                names = variable['vm']
-            else:
-                variable['vm'] = arguments['--name']
-
-            timer = Parameter.expand(arguments['--timer'])
-            if timer == None:
-                timer = variable['timer']
-            else:
-                variable['timer'] = arguments['--timer']
+            names = self.get_variables(arguments, variables, '--name', 'vm')
+            timer = self.get_variables(arguments, variables, '--timer', 'timer')
 
             public_ips = list(provider.get_publicIPs(names).values())
-            public_ips = [i[0] for i in public_ips] #flatten
+            public_ips = [y for x in public_ips for y in x]
 
             def console_response(x):
                 if x[1] == 0:
-                    Console.ok("ping " + x[0] + ' successful.')
+                    Console.ok("ping " + x[0] + ' success.')
                 else:
                     Console.error("ping " + x[0] + ' failure. return code: ' + str(x[1]))
 
             list(map(console_response, provider.ping(public_ips, timeout=timer)))
 
+        elif arguments.check:
+            keypair_name = self.get_variables(arguments, variables, '--keypair_name', 'keypair')[0]
+            names = self.get_variables(arguments, variables, '--name', 'vm')
+            timer = self.get_variables(arguments, variables, '--timer', 'timer')
+
+            print(provider.check(names=names, keypair=keypair_name, timeout=timer))
+
         else:
-            # variable = Variables()
-            # print(variable['vm'])
-            # for k in variable:
-            #     print(k)
-            # print(variable.vm)
             Console.error("function not available")
+
+    def get_variables(self, arguments, variables, arg_key, var_key):
+        ret = Parameter.expand(arguments[arg_key])
+        if ret == None:
+            return Parameter.expand(variables[var_key])
+        else:
+            variables[var_key] = arguments[arg_key]
+            return ret
