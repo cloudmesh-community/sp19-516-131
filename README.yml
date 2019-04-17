@@ -7,5 +7,7 @@ owner:
     semester: sp19
 project:
     - title: TBD
-      url: https://github.com/hyspoc/cm/blob/master/cloudmesh/compute/libcloud/Provider.py
+      code: https://github.com/hyspoc/cm/blob/master/cloudmesh/compute/libcloud/Provider.py
+      pytest:
+          - TBD
 
