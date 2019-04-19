@@ -9,6 +9,21 @@ class Provider(LibCloudProvider):
     def __init__(self, name='aws', configuration="~/.cloudmesh/cloudmesh4.yaml"):
         super().__init__(name=name, configuration=configuration)
 
+    def apply(self, fname, names):
+        """
+        apply a function to a given list of nodes
+
+        :param fname: Name of the function to be applied to the given nodes
+        :param names: A list of node names
+        :return:  A list of dict representing the nodes
+        """
+        if self.cloudman:
+            nodes = self.find(elements=self.list(raw=True), names=names, raw=True)
+            map(fname, nodes)
+            return self.info(names)
+        else:
+            return None
+
     def find(self, elements, names=None, raw=False):
         """
         finds a list of elements in elements with the specified names
@@ -34,6 +49,22 @@ class Provider(LibCloudProvider):
         """
         return self.find(self.list(), names=names)
 
+    def status(self, names=None):
+        """
+        Get status of nodes
+        :param names: The names of the virtual machine
+        :return: list of status
+        """
+        return list(map(lambda x: x['state'], self.info(names)))
+
+    def assign_public_ip(self, names=None):
+        """
+        Assign public IP to nodes
+        :param names: The names of the virtual machine
+        :return: The dict representing the nodes including updated status
+        """
+        return self.apply(self.cloudman.ex_assign_public_ip, names)
+
     def images(self, raw=False, ex_image_ids=None):
         """
         Lists the images on the cloud
@@ -50,21 +81,6 @@ class Provider(LibCloudProvider):
 
         return None
 
-    def apply(self, fname, names):
-        """
-        apply a function to a given list of nodes
-
-        :param fname: Name of the function to be applied to the given nodes
-        :param names: A list of node names
-        :return:  A list of dict representing the nodes
-        """
-        if self.cloudman:
-            nodes = self.find(elements=self.list(raw=True), names=names, raw=True)
-            map(fname, nodes)
-            return self.info(names)
-        else:
-            return None
-
     def get_publicIPs(self, names=None):
         """
         get public ip addresses of a given list of nodes
@@ -74,7 +90,7 @@ class Provider(LibCloudProvider):
         """
         return dict((x['name'], x['public_ips']) for x in self.info(names))
 
-    def __partial_ping__(self, ip, timeout=None):
+    def __partial_ping__(self, ip):
         """
         ping a vm from given ip address
 
@@ -84,10 +100,10 @@ class Provider(LibCloudProvider):
         """
         param = '-n' if platform.system().lower()=='windows' else '-c'
         command = ['ping', param, '1', ip]
-        ret_code = run(command, capture_output=False, timeout=timeout).returncode
+        ret_code = run(command, capture_output=False).returncode
         return ip, ret_code
 
-    def ping(self, public_ips=None, timeout=None):
+    def ping(self, public_ips=None, processors=3):
         """
         ping a list of given ip addresses
 
@@ -98,21 +114,9 @@ class Provider(LibCloudProvider):
         ###                                    ###
         ### need to check security group first ###
         ###                                    ###
-        with Pool(len(public_ips)) as p:
+        with Pool(processors) as p:
             res = p.map(self.__partial_ping__, public_ips)
         return res
-
-    def get_ssh_usernames(self, names=None):
-        """
-        get ssh usernames given node names
-
-                NOT YET IMPLEMENTED
-
-        :param names: A list of node names
-        :return: A dict representing the ssh usernames
-        """
-        ### need to map ssh username according to image id ###
-        return dict((x['name'], "ec2-user") for x in self.info(names))
 
     def get_dns_names(self, names=None):
         """
@@ -125,7 +129,13 @@ class Provider(LibCloudProvider):
         """
         return dict((x['name'], x['extra']['dns_name']) for x in self.info(names))
 
-    def __partial_check__(self, keypair, location, timeout=None):
+    def ssh(self, username=None, ip=None):
+        keypair = self.cred['EC2_PRIVATE_KEY_FILE_PATH'] + self.cred['EC2_PRIVATE_KEY_FILE_NAME']
+        location = username + '@' + ip
+        command = ['ssh', '-i', keypair, location]
+        run(command)
+
+    def __partial_check__(self, location, timeout=None):
         """
         check a vm from given keypair and vm location
 
@@ -136,7 +146,8 @@ class Provider(LibCloudProvider):
         :param timeout: given in seconds. if timeout expires, the process is killed
         :return: a str representing the check result
         """
-        # location = username+'@'+dns_name
+        return ""
+        keypair = self.cred['EC2_PRIVATE_KEY_FILE_PATH'] + self.cred['EC2_PRIVATE_KEY_FILE_NAME']
         command = ['ssh', '-i', keypair, location]
         ret_code = run(command, capture_output=False).returncode
         run(['exit'])
@@ -153,6 +164,7 @@ class Provider(LibCloudProvider):
         :param timeout: given in seconds. if timeout expires, a process is killed
         :return: A list of tuples representing the check result
         """
+        return ""
         user_names = list(self.get_ssh_usernames(names).values())
         dns_names = list(self.get_dns_names(names).values())
 
