@@ -6,6 +6,8 @@ owner:
     community: e516
     semester: sp19
 project:
-    - title:
-      url: https://github.com/hyspoc/cm/blob/master/cloudmesh/compute/libcloud/Provider.py
+    - title: TBD
+      code: https://github.com/hyspoc/cm/blob/master/cloudmesh/compute/libcloud/Provider.py
+      pytest:
+          - TBD
 
