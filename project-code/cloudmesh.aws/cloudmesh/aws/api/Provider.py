@@ -90,20 +90,21 @@ class Provider(LibCloudProvider):
         """
         return dict((x['name'], x['public_ips']) for x in self.info(names))
 
-    def __partial_ping__(self, ip):
+    def __partial_ping__(self, args):
         """
         ping a vm from given ip address
 
-        :param ip: str of ip address
-        :param timeout: given in seconds. if timeout expires, the process is killed
+        :param args: tuple of (ip address, count)
         :return: a tuple representing the ping result
         """
+        ip = args[0]
+        count = args[1]
         param = '-n' if platform.system().lower()=='windows' else '-c'
-        command = ['ping', param, '1', ip]
+        command = ['ping', param, str(count), args[0]]
         ret_code = run(command, capture_output=False).returncode
         return ip, ret_code
 
-    def ping(self, public_ips=None, processors=3):
+    def ping(self, public_ips=None, count=3, processors=10):
         """
         ping a list of given ip addresses
 
@@ -111,11 +112,10 @@ class Provider(LibCloudProvider):
         :param timeout: given in seconds. if timeout expires, a process is killed
         :return: A list of tuples representing the ping result
         """
-        ###                                    ###
-        ### need to check security group first ###
-        ###                                    ###
+        args = [(ip, count) for ip in public_ips]
+
         with Pool(processors) as p:
-            res = p.map(self.__partial_ping__, public_ips)
+            res = p.map(self.__partial_ping__, args)
         return res
 
     def get_dns_names(self, names=None):
@@ -129,11 +129,12 @@ class Provider(LibCloudProvider):
         """
         return dict((x['name'], x['extra']['dns_name']) for x in self.info(names))
 
-    def ssh(self, username=None, ip=None):
-        keypair = self.cred['EC2_PRIVATE_KEY_FILE_PATH'] + self.cred['EC2_PRIVATE_KEY_FILE_NAME']
+    def ssh(self, username=None, quiet=None, ip=None, key=None, command=None, modify_knownhosts=None):
+        if key == None:
+            key = self.spec['credentials']['EC2_PRIVATE_KEY_FILE_PATH'] + self.spec['credentials']['EC2_PRIVATE_KEY_FILE_NAME']
         location = username + '@' + ip
-        command = ['ssh', '-i', keypair, location]
-        run(command)
+        ssh_command = ['ssh', '-i', key, location]
+        run(ssh_command)
 
     def __partial_check__(self, location, timeout=None):
         """

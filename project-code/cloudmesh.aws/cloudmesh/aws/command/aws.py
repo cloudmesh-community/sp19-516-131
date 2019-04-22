@@ -16,7 +16,6 @@ from cloudmesh.common.error import Error
 from pprint import pprint
 
 
-
 class AwsCommand(PluginCommand):
 
     # noinspection PyUnusedLocal
@@ -63,7 +62,7 @@ class AwsCommand(PluginCommand):
                           [--cloud=CLOUD]
                 vm ip show [NAMES]
                            [--group=GROUP]
-                           [--cloud=CLOUD]
+                           [--cloud=CLOUD],
                            [--output=OUTPUT]
                            [--refresh]
                 vm ip inventory [NAMES]
@@ -230,8 +229,26 @@ class AwsCommand(PluginCommand):
         """
 
         map_parameters(arguments,
+                       'active',
+                       'cloud',
+                       'command',
+                       'dryrun',
                        'flavor',
-                       'image')
+                       'force',
+                       'output',
+                       'group',
+                       'image',
+                       'interval',
+                       'ip',
+                       'key',
+                       'modify-knownhosts',
+                       'n',
+                       'name',
+                       'public',
+                       'quiet',
+                       'secgroup',
+                       'size',
+                       'username')
 
         # VERBOSE.print(arguments, verbose=9)
 
@@ -251,20 +268,15 @@ class AwsCommand(PluginCommand):
             return ""
 
         elif arguments.ping:
-            pings = int(arguments.N or 3)
+            pings = int(arguments['--count'] or 3)
+            processors = int(arguments['--processors'] or 10)
 
             clouds, names = Arguments.get_cloud_and_names("ping", arguments, variables)
 
             public_ips = list(provider.get_publicIPs(names).values())
             public_ips = [y for x in public_ips for y in x]
 
-            def console_response(x):
-                if x[1] == 0:
-                    Console.ok("ping " + x[0] + ' success.')
-                else:
-                    Console.error("ping " + x[0] + ' failure. return code: ' + str(x[1]))
-
-            list(map(console_response, provider.ping(public_ips)))
+            list(map(self.__console_response__, provider.ping(public_ips, pings, processors)))
 
         elif arguments.check:
 
@@ -301,10 +313,7 @@ class AwsCommand(PluginCommand):
             pprint(provider.destroy(names))
 
         elif arguments.boot:
-
-            clouds, names = Arguments.get_cloud_and_names("boot", arguments, variables)
-
-            pprint(provider.reboot(names))
+            print("boots vm, implemented by Eric Collins")
 
         elif arguments.list:
             clouds, names = Arguments.get_cloud_and_names("list", arguments, variables)
@@ -317,13 +326,13 @@ class AwsCommand(PluginCommand):
             pprint(provider.info(names))
 
         elif arguments.rename:
-            print("rename")
+            print("rename, cannot be implemented")
 
         elif arguments.ip and arguments.show:
-            print("show ips")
+            clouds, names = Arguments.get_cloud_and_names("ip", arguments, variables)
+            pprint(get_publicIPs(names))
 
         elif arguments.ip and arguments.assign:
-            print("assign ip address")
             clouds, names = Arguments.get_cloud_and_names("ip", arguments, variables)
 
             pprint(provider.assign_public_ip(names))
@@ -331,15 +340,7 @@ class AwsCommand(PluginCommand):
         elif arguments.ip and arguments.inventory:
             print("list ips that could be assigned")
 
-        elif arguments.username:
-
-            """
-            vm username USERNAME [NAMES] [--cloud=CLOUD]
-            """
-            print("sets the username for the vm")
-
         elif arguments.default:
-
             print("sets defaults for the vm")
 
         elif arguments.run:
@@ -362,11 +363,11 @@ class AwsCommand(PluginCommand):
             pass
 
         elif arguments.ssh:
-            print("ssh")
-            print(variables['--ip'])
-            print(arguments['--username'])
+            names = Arguments.get_names(arguments, variables)
+            ip = arguments['--ip'] or list(provider.get_publicIPs(names).values())[0][0]
+            username2 = arguments['--username']
 
-            provider.ssh('ec2user', '52.43.129.118')
+            provider.ssh(username=username, ip=ip)
 
         elif arguments.console:
             # vm console [NAME] [--force]
@@ -384,49 +385,17 @@ class AwsCommand(PluginCommand):
             """
             print("waits for the vm till its ready and one can login")
 
-        return
-        # if arguments.flavor and arguments.list:
-        #     pprint(provider.flavors())
-        #
-        # elif arguments.image and arguments.list:
-        #     pprint(provider.images())
-        #
-        # elif arguments.list:
-        #     pprint(provider.list())
-        #
-        # elif arguments.info:
-        #     names = self.get_variables(arguments, variables, '--name', 'vm')
-        #     pprint(provider.info(names))
-        #
-        # elif arguments.reboot:
-        #     names = self.get_variables(arguments, variables, '--name', 'vm')
-        #     pprint(provider.reboot(names))
-        #
-        # elif arguments.ip and arguments.show:
-        #     names = self.get_variables(arguments, variables, '--name', 'vm')
-        #     pprint(provider.get_publicIPs(names))
+        elif arguments.username:
 
-        # elif arguments.ping:
-        #     names = self.get_variables(arguments, variables, '--name', 'vm')
-        #     timer = self.get_variables(arguments, variables, '--timer', 'timer')
-        #
-        #     public_ips = list(provider.get_publicIPs(names).values())
-        #     public_ips = [y for x in public_ips for y in x]
-        #
-        #     def console_response(x):
-        #         if x[1] == 0:
-        #             Console.ok("ping " + x[0] + ' success.')
-        #         else:
-        #             Console.error("ping " + x[0] + ' failure. return code: ' + str(x[1]))
-        #
-        #     list(map(console_response, provider.ping(public_ips, timeout=timer)))
-        #
-        # elif arguments.check:
-        #     keypair_name = self.get_variables(arguments, variables, '--keypair_name', 'keypair')[0]
-        #     names = self.get_variables(arguments, variables, '--name', 'vm')
-        #     timer = self.get_variables(arguments, variables, '--timer', 'timer')
-        #
-        #     print(provider.check(names=names, keypair=keypair_name, timeout=timer))
-        #
-        # else:
-        #     Console.error("function not available")
+            """
+            vm username USERNAME [NAMES] [--cloud=CLOUD]
+            """
+            print("sets the username for the vm")
+
+        return
+
+    def __console_response__(self, x):
+        if x[1] == 0:
+            Console.ok("ping " + x[0] + ' success.')
+        else:
+            Console.error("ping " + x[0] + ' failure. return code: ' + str(x[1]))
