@@ -254,7 +254,7 @@ class AwsCommand(PluginCommand):
 
         variables = Variables()
 
-        pprint(arguments)
+        # pprint(arguments)
         # pprint(variables)
 
         provider = Provider()
@@ -267,7 +267,11 @@ class AwsCommand(PluginCommand):
 
             return ""
 
+
         elif arguments.ping:
+            if arguments.NAMES:
+                variables['vm'] = arguments.NAMES
+
             pings = int(arguments['--count'] or 3)
             processors = int(arguments['--processors'] or 10)
 
@@ -287,40 +291,85 @@ class AwsCommand(PluginCommand):
             return ""
 
         elif arguments.status:
+            if arguments.NAMES:
+                variables['vm'] = arguments.NAMES
             clouds, names = Arguments.get_cloud_and_names("status", arguments, variables)
 
             pprint(provider.status(names))
 
         elif arguments.start:
+            if arguments.NAMES:
+                variables['vm'] = arguments.NAMES
+            wait = int(variables['wait']) or 0
+
             clouds, names = Arguments.get_cloud_and_names("start", arguments, variables)
 
-            pprint(provider.start(names))
+            pprint(provider.start(names, wait=wait))
 
         elif arguments.stop:
+            if arguments.NAMES:
+                variables['vm'] = arguments.NAMES
+            wait = int(variables['wait']) or 0
+
             clouds, names = Arguments.get_cloud_and_names("stop", arguments, variables)
 
-            pprint(provider.stop(names))
+            pprint(provider.stop(names, wait=wait))
 
         elif arguments.terminate:
+            if arguments.NAMES:
+                variables['vm'] = arguments.NAMES
+            wait = int(variables['wait']) or 0
+
             clouds, names = Arguments.get_cloud_and_names("terminate", arguments, variables)
 
-            pprint(provider.destroy(names))
+            pprint(provider.destroy(names, wait=wait))
 
         ## terminate & delete difference??
         elif arguments.delete:
+            if arguments.NAMES:
+                variables['vm'] = arguments.NAMES
+            wait = int(variables['wait']) or 0
+
             clouds, names = Arguments.get_cloud_and_names("delete", arguments, variables)
 
-            pprint(provider.destroy(names))
+            pprint(provider.destroy(names, wait=wait))
 
         elif arguments.boot:
-            print("boots vm, implemented by Eric Collins")
+            """
+                            vm boot [--name=VMNAMES]
+                                    [--public]
+                                    [--secgroup=SECGROUPs]
+                                    [--key=KEY]
+                                    [--dryrun]
+                            vm boot [--n=COUNT]
+                                    [--public]
+                                    [--secgroup=SECGROUPS]
+                                    [--key=KEY]
+                                    [--dryrun]
+            """
+            # cms aws boot --name=t0 --image=ami-0bbe6b35405ecebdb --flavor=t2.micro
+            # clouds, names = Arguments.get_cloud_and_names("delete", arguments, variables)
+            name = arguments['name']
+            image = arguments['image']
+            flavor = arguments['flavor']
+            # print(name)
+            # print(image)
+            # print(flavor)
+            pprint(provider.create(name=name, image=image, flavor=flavor))
+
 
         elif arguments.list:
+            if arguments.NAMES:
+                variables['vm'] = arguments.NAMES
+
             clouds, names = Arguments.get_cloud_and_names("list", arguments, variables)
 
             pprint(provider.info(names))
 
         elif arguments.info:
+            if arguments.NAMES:
+                variables['vm'] = arguments.NAMES
+
             clouds, names = Arguments.get_cloud_and_names("info", arguments, variables)
 
             pprint(provider.info(names))
@@ -363,6 +412,9 @@ class AwsCommand(PluginCommand):
             pass
 
         elif arguments.ssh:
+            if arguments.NAMES:
+                variables['vm'] = arguments.NAMES
+
             names = Arguments.get_names(arguments, variables)
             ip = arguments['--ip'] or list(provider.get_publicIPs(names).values())[0][0]
             username2 = arguments['--username']
@@ -380,10 +432,8 @@ class AwsCommand(PluginCommand):
             return
 
         elif arguments.wait:
-            """
-            vm wait [--cloud=CLOUD] [--interval=SECONDS]
-            """
-            print("waits for the vm till its ready and one can login")
+            variables['wait'] = arguments['--interval']
+            # print("waits for the vm till its ready and one can login")
 
         elif arguments.username:
 
