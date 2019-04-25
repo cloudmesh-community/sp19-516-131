@@ -259,6 +259,9 @@ class AwsCommand(PluginCommand):
 
         provider = Provider()
 
+        database = CmDatabase()
+        database.connect()
+
         if arguments.refresh:
 
             names = []
@@ -266,7 +269,6 @@ class AwsCommand(PluginCommand):
             clouds, names = Arguments.get_cloud_and_names("refresh", arguments, variables)
 
             return ""
-
 
         elif arguments.ping:
             if arguments.NAMES:
@@ -283,12 +285,7 @@ class AwsCommand(PluginCommand):
             list(map(self.__console_response__, provider.ping(public_ips, pings, processors)))
 
         elif arguments.check:
-
-            names = []
-
-            clouds, names = Arguments.get_cloud_and_names("check", arguments, variables)
-
-            return ""
+            print("Not Supported by Libcloud")
 
         elif arguments.status:
             if arguments.NAMES:
@@ -337,26 +334,46 @@ class AwsCommand(PluginCommand):
         elif arguments.boot:
             """
                             vm boot [--name=VMNAMES]
+                                    [--cloud=CLOUD]
+                                    [--username=USERNAME]
+                                    [--image=IMAGE]
+                                    [--flavor=FLAVOR]
                                     [--public]
                                     [--secgroup=SECGROUPs]
                                     [--key=KEY]
                                     [--dryrun]
                             vm boot [--n=COUNT]
+                                    [--cloud=CLOUD]
+                                    [--username=USERNAME]
+                                    [--image=IMAGE]
+                                    [--flavor=FLAVOR]
                                     [--public]
                                     [--secgroup=SECGROUPS]
                                     [--key=KEY]
                                     [--dryrun]
             """
-            # cms aws boot --name=t0 --image=ami-0bbe6b35405ecebdb --flavor=t2.micro
-            # clouds, names = Arguments.get_cloud_and_names("delete", arguments, variables)
-            name = arguments['name']
-            image = arguments['image']
-            flavor = arguments['flavor']
-            # print(name)
-            # print(image)
-            # print(flavor)
-            pprint(provider.create(name=name, image=image, flavor=flavor))
+            if arguments['name']:
+                names = Parameter.expand(arguments['name'])
+                # username = arguments['username'] username is not supported by libcloud ec2
+                image = arguments['image']
+                flavor = arguments['flavor']
+                # public = not sure what it means
+                secgroups = Parameter.expand(arguments['secgroup'])
+                key = arguments['key']
+                for name in names:
+                    pprint(provider.create(name=name, image=image, flavor=flavor, ex_security_groups=secgroups, ex_keyname=key))
 
+            elif arguments['n']:
+                n = int(arguments['n'])
+                # username = arguments['username'] username is not supported by libcloud ec2
+                image = arguments['image']
+                flavor = arguments['flavor']
+                # public = not sure what it means
+                secgroups = Parameter.expand(arguments['secgroup'])
+                key = arguments['key']
+                for i in range(n):
+                    pprint(provider.create(image=image, flavor=flavor, ex_security_groups=secgroups, ex_keyname=key))
+            # cms aws boot --name=test --secgroup=sg-8b3fcbc3 --key=aws_cert
 
         elif arguments.list:
             if arguments.NAMES:

@@ -11,6 +11,10 @@ class Provider(LibCloudProvider):
         super().__init__(name=name, configuration=configuration)
 
     def create(self, name=None, image=None, flavor=None, **kwargs):
+        if image == None:
+            image = self.spec['default']['image']
+        if flavor == None:
+            flavor = self.spec['default']['size']
         image = [i for i in self.images(raw=True) if i.id == image][0]
         flavor = [s for s in self.flavors(raw=True) if s.id == flavor][0]
 

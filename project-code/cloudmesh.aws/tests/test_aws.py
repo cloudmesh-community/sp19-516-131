@@ -64,58 +64,72 @@ class TestConfig:
         assert "success" in result
         assert "4 packets transmitted" in result
 
-    def test_01_start(self):
-        HEADING()
-
-        result = Shell.execute("cms aws start t0", shell=True)
-
-        VERBOSE(result)
-
-        assert "t0" in result
-        assert "running" in result
-
     def test_01_stop(self):
         HEADING()
 
-        result = Shell.execute("cms aws stop t1", shell=True)
+        result = Shell.execute("cms aws stop t01", shell=True)
 
         VERBOSE(result)
 
-        assert "t1" in result
+        assert "t01" in result
         assert "stopped" in result
+
+    def test_02_stop(self):
+        HEADING()
+
+        result = Shell.execute("cms aws stop t02", shell=True)
+
+        VERBOSE(result)
+
+        assert "t02" in result
+        assert "stopped" in result
+
+    def test_01_start(self):
+        HEADING()
+
+        result = Shell.execute("cms aws start t01", shell=True)
+
+        VERBOSE(result)
+
+        assert "t01" in result
+        assert "t01" in result
+        assert "running" in result
+
 
     def test_01_terminate(self):
         HEADING()
 
-        result = Shell.execute("cms aws terminate t2", shell=True)
+        result = Shell.execute("cms aws terminate t03", shell=True)
 
         VERBOSE(result)
 
-        assert "t2" in result
+        assert "t03" in result
         assert "terminated" in result
 
     def test_01_status(self):
         HEADING()
 
-        result = Shell.execute("cms aws status t0", shell=True)
+        result = Shell.execute("cms aws status t01", shell=True)
 
         VERBOSE(result)
 
+        assert "t01" in result
         assert "running" in result
 
     def test_02_status(self):
         HEADING()
 
-        result = Shell.execute("cms aws status t1", shell=True)
+        result = Shell.execute("cms aws status t02", shell=True)
 
         VERBOSE(result)
 
+        assert "t02" in result
         assert "stopped" in result
 
-    def test_02_status(self):
+    def test_03_status(self):
         HEADING()
 
-        result = Shell.execute("cms aws status t3", shell=True)
+        result = Shell.execute("cms aws status t03", shell=True)
 
         VERBOSE(result)
 
