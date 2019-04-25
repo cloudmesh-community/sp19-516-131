@@ -254,10 +254,13 @@ class AwsCommand(PluginCommand):
 
         variables = Variables()
 
-        pprint(arguments)
+        # pprint(arguments)
         # pprint(variables)
 
         provider = Provider()
+
+        database = CmDatabase()
+        database.connect()
 
         if arguments.refresh:
 
@@ -268,6 +271,9 @@ class AwsCommand(PluginCommand):
             return ""
 
         elif arguments.ping:
+            if arguments.NAMES:
+                variables['vm'] = arguments.NAMES
+
             pings = int(arguments['--count'] or 3)
             processors = int(arguments['--processors'] or 10)
 
@@ -279,48 +285,108 @@ class AwsCommand(PluginCommand):
             list(map(self.__console_response__, provider.ping(public_ips, pings, processors)))
 
         elif arguments.check:
-
-            names = []
-
-            clouds, names = Arguments.get_cloud_and_names("check", arguments, variables)
-
-            return ""
+            print("Not Supported by Libcloud")
 
         elif arguments.status:
+            if arguments.NAMES:
+                variables['vm'] = arguments.NAMES
             clouds, names = Arguments.get_cloud_and_names("status", arguments, variables)
 
             pprint(provider.status(names))
 
         elif arguments.start:
+            if arguments.NAMES:
+                variables['vm'] = arguments.NAMES
+            wait = int(variables['wait']) or 0
+
             clouds, names = Arguments.get_cloud_and_names("start", arguments, variables)
 
-            pprint(provider.start(names))
+            pprint(provider.start(names, wait=wait))
 
         elif arguments.stop:
+            if arguments.NAMES:
+                variables['vm'] = arguments.NAMES
+            wait = int(variables['wait']) or 0
+
             clouds, names = Arguments.get_cloud_and_names("stop", arguments, variables)
 
-            pprint(provider.stop(names))
+            pprint(provider.stop(names, wait=wait))
 
         elif arguments.terminate:
+            if arguments.NAMES:
+                variables['vm'] = arguments.NAMES
+            wait = int(variables['wait']) or 0
+
             clouds, names = Arguments.get_cloud_and_names("terminate", arguments, variables)
 
-            pprint(provider.destroy(names))
+            pprint(provider.destroy(names, wait=wait))
 
         ## terminate & delete difference??
         elif arguments.delete:
+            if arguments.NAMES:
+                variables['vm'] = arguments.NAMES
+            wait = int(variables['wait']) or 0
+
             clouds, names = Arguments.get_cloud_and_names("delete", arguments, variables)
 
-            pprint(provider.destroy(names))
+            pprint(provider.destroy(names, wait=wait))
 
         elif arguments.boot:
-            print("boots vm, implemented by Eric Collins")
+            """
+                            vm boot [--name=VMNAMES]
+                                    [--cloud=CLOUD]
+                                    [--username=USERNAME]
+                                    [--image=IMAGE]
+                                    [--flavor=FLAVOR]
+                                    [--public]
+                                    [--secgroup=SECGROUPs]
+                                    [--key=KEY]
+                                    [--dryrun]
+                            vm boot [--n=COUNT]
+                                    [--cloud=CLOUD]
+                                    [--username=USERNAME]
+                                    [--image=IMAGE]
+                                    [--flavor=FLAVOR]
+                                    [--public]
+                                    [--secgroup=SECGROUPS]
+                                    [--key=KEY]
+                                    [--dryrun]
+            """
+            if arguments['name']:
+                names = Parameter.expand(arguments['name'])
+                # username = arguments['username'] username is not supported by libcloud ec2
+                image = arguments['image']
+                flavor = arguments['flavor']
+                # public = not sure what it means
+                secgroups = Parameter.expand(arguments['secgroup'])
+                key = arguments['key']
+                for name in names:
+                    pprint(provider.create(name=name, image=image, flavor=flavor, ex_security_groups=secgroups, ex_keyname=key))
+
+            elif arguments['n']:
+                n = int(arguments['n'])
+                # username = arguments['username'] username is not supported by libcloud ec2
+                image = arguments['image']
+                flavor = arguments['flavor']
+                # public = not sure what it means
+                secgroups = Parameter.expand(arguments['secgroup'])
+                key = arguments['key']
+                for i in range(n):
+                    pprint(provider.create(image=image, flavor=flavor, ex_security_groups=secgroups, ex_keyname=key))
+            # cms aws boot --name=test --secgroup=sg-8b3fcbc3 --key=aws_cert
 
         elif arguments.list:
+            if arguments.NAMES:
+                variables['vm'] = arguments.NAMES
+
             clouds, names = Arguments.get_cloud_and_names("list", arguments, variables)
 
             pprint(provider.info(names))
 
         elif arguments.info:
+            if arguments.NAMES:
+                variables['vm'] = arguments.NAMES
+
             clouds, names = Arguments.get_cloud_and_names("info", arguments, variables)
 
             pprint(provider.info(names))
@@ -363,6 +429,9 @@ class AwsCommand(PluginCommand):
             pass
 
         elif arguments.ssh:
+            if arguments.NAMES:
+                variables['vm'] = arguments.NAMES
+
             names = Arguments.get_names(arguments, variables)
             ip = arguments['--ip'] or list(provider.get_publicIPs(names).values())[0][0]
             username2 = arguments['--username']
@@ -380,10 +449,8 @@ class AwsCommand(PluginCommand):
             return
 
         elif arguments.wait:
-            """
-            vm wait [--cloud=CLOUD] [--interval=SECONDS]
-            """
-            print("waits for the vm till its ready and one can login")
+            variables['wait'] = arguments['--interval']
+            # print("waits for the vm till its ready and one can login")
 
         elif arguments.username:
 

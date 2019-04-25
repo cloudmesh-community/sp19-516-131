@@ -7,7 +7,7 @@ owner:
     semester: sp19
 project:
     - title: AWS VM Management
-      code: https://github.com/hyspoc/cm/blob/master/cloudmesh/compute/libcloud/Provider.py
-      code2: https://github.com/hyspoc/sp19-516-131/blob/master/project-code/cloudmesh.aws/cloudmesh/aws/command/aws.py
+      code: https://github.com/cloudmesh-community/sp19-516-131/blob/master/project-code/cloudmesh.aws/cloudmesh/aws/api/Provider.py
+      code2: https://github.com/cloudmesh-community/sp19-516-131/blob/master/project-code/cloudmesh.aws/cloudmesh/aws/command/aws.py
       pytest:
           - https://github.com/cloudmesh-community/sp19-516-127/blob/master/project_code/cloudmesh-newawsvm/tests/test_benchmark.py

@@ -2,6 +2,7 @@ from cloudmesh.compute.libcloud.Provider import Provider as LibCloudProvider
 import platform
 from subprocess import run
 from multiprocessing import Pool
+import time
 
 from pprint import pprint
 
@@ -9,7 +10,44 @@ class Provider(LibCloudProvider):
     def __init__(self, name='aws', configuration="~/.cloudmesh/cloudmesh4.yaml"):
         super().__init__(name=name, configuration=configuration)
 
-    def apply(self, fname, names):
+    def create(self, name=None, image=None, flavor=None, **kwargs):
+        if image == None:
+            image = self.spec['default']['image']
+        if flavor == None:
+            flavor = self.spec['default']['size']
+        image = [i for i in self.images(raw=True) if i.id == image][0]
+        flavor = [s for s in self.flavors(raw=True) if s.id == flavor][0]
+
+        return self.cloudman.create_node(name=name, image=image, size=flavor, **kwargs)
+
+    def start(self, names=None, wait=0):
+        """
+        Start a list of nodes with the given names
+
+        :param names: A list of node names
+        :return:  A list of dict representing the nodes
+        """
+        return self.apply(self.cloudman.ex_start_node, names, wait=wait)
+
+    def stop(self, names=None, wait=0):
+        """
+        Stop a list of nodes with the given names
+
+        :param names: A list of node names
+        :return:  A list of dict representing the nodes
+        """
+
+        return self.apply(self.cloudman.ex_stop_node, names, wait=wait)
+
+    def destroy(self, names=None, wait=0):
+        """
+        Destroys the node
+        :param names: the name of the node
+        :return: the dict of the node
+        """
+        return self.apply(self.cloudman.destroy_node, names, wait=wait)
+
+    def apply(self, fname, names, wait=0):
         """
         apply a function to a given list of nodes
 
@@ -19,7 +57,9 @@ class Provider(LibCloudProvider):
         """
         if self.cloudman:
             nodes = self.find(elements=self.list(raw=True), names=names, raw=True)
-            map(fname, nodes)
+            for node in nodes:
+                fname(node)
+            time.sleep(wait)
             return self.info(names)
         else:
             return None
@@ -36,7 +76,8 @@ class Provider(LibCloudProvider):
         """
         res = []
         for element in elements:
-            if (raw and element.name) or element["name"] in names:
+            name = (raw and element.name) or element["name"]
+            if name in names:
                 res.append(element)
         return res
 
