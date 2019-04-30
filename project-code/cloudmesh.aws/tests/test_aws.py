@@ -10,6 +10,7 @@ import textwrap
 import oyaml as yaml
 import munch
 import re
+import time
 
 from cloudmesh.common.Shell import Shell
 from cloudmesh.DEBUG import VERBOSE
@@ -20,48 +21,48 @@ from cloudmesh.common.StopWatch import StopWatch
 @pytest.mark.incremental
 class TestConfig:
 
-    def set_up(self):
+    def setup(self):
         conf = Config("~/.cloudmesh/cloudmesh4.yaml")["cloudmesh"]
         cred = conf["cloud"]['aws']["credentials"]
-        self.keypath = cred['EC2_PRIVATE_KEY_FILE_PATH'] + cred['EC2_PRIVATE_KEY_FILE_NAME']
+        self.key = (cred['EC2_PRIVATE_KEY_FILE_NAME']).split('.')[0]
 
     def test_01_boot(self):
         HEADING()
 
         StopWatch.start("cms aws boot dryrun")
-        result = Shell.execute("cms aws boot --name=test_boot_01 --cloud=aws --username=root --image=ami-08692d171e3cf02d6  --flavor=t2.micro --public --key={} --dryrun".format(self.keypath), shell=True)
+        result = Shell.execute("cms aws boot --name=test_boot_01 --cloud=aws --username=root --image=ami-08692d171e3cf02d6  --flavor=t2.micro --public --key={} --dryrun".format(self.key), shell=True)
         StopWatch.stop("cms aws boot dryrun")
 
         VERBOSE(result)
 
         assert "create nodes ['test_boot_01']" in result
-        assert "image - ami-0bbe6b35405ecebdb" in result
+        assert "image - ami-08692d171e3cf02d6" in result
         assert "flavor - t2.micro" in result
         assert "assign public ip - True" in result
         assert "security groups - None" in result
-        assert "keypair name - None" in result
+        assert "keypair name - "+self.key in result
 
     def test_02_boot(self):
         HEADING()
 
         StopWatch.start("cms aws boot dryrun")
-        result = Shell.execute("cms aws boot --n=2 --cloud=aws --username=root --image=ami-08692d171e3cf02d6  --flavor=t2.micro --public --key={} --dryrun".format(self.keypath), shell=True)
+        result = Shell.execute("cms aws boot --n=2 --cloud=aws --username=root --image=ami-08692d171e3cf02d6  --flavor=t2.micro --public --key={} --dryrun".format(self.key), shell=True)
         StopWatch.stop("cms aws boot dryrun")
 
         VERBOSE(result)
 
         assert "create nodes" in result
-        assert "image - ami-0bbe6b35405ecebdb" in result
+        assert "image - ami-08692d171e3cf02d6" in result
         assert "flavor - t2.micro" in result
         assert "assign public ip - True" in result
         assert "security groups - None" in result
-        assert "keypair name - None" in result
+        assert "keypair name - "+self.key in result
 
     def test_03_boot(self):
         HEADING()
 
         StopWatch.start("cms aws boot")
-        result = Shell.execute("cms aws boot --name=test_boot_01,test_boot_02 --cloud=aws --username=root --image=ami-08692d171e3cf02d6  --flavor=t2.micro --public --key={}".format(self.keypath), shell=True)
+        result = Shell.execute("cms aws boot --name=test_boot_01,test_boot_02 --cloud=aws --username=root --image=ami-08692d171e3cf02d6  --flavor=t2.micro --public --key={}".format(self.key), shell=True)
         StopWatch.stop("cms aws boot")
 
         VERBOSE(result)
@@ -69,10 +70,10 @@ class TestConfig:
         assert "'name': 'test_boot_01'" in result
 
     def test_04_boot(self):
-        HEADING()
+        HEADING("this test will fail, press Ctrl-C to skip")
 
         StopWatch.start("cms aws boot")
-        result = Shell.execute("cms aws boot --n=2 --cloud=aws --username=root --image=ami-08692d171e3cf02d6  --flavor=t2.micro --public --key={}".format(self.keypath), shell=True)
+        result = Shell.execute("cms aws boot --n=2 --cloud=aws --username=root --image=ami-08692d171e3cf02d6  --flavor=t2.micro --public --key={}".format(self.key), shell=True)
         StopWatch.stop("cms aws boot")
 
         VERBOSE(result)
@@ -88,7 +89,11 @@ class TestConfig:
         assert r1==r2
 
     def test_status(self):
-        HEADING()
+        HEADING("please patiently wait for vm to boot and proceed with other tests")
+
+        # wait for vms to boot for further tests
+        while 'pending' in Shell.execute("cms aws list test_boot_01 --refresh", shell=True):
+            time.sleep(1)
 
         StopWatch.start("cms aws status")
         result = Shell.execute("cms aws status test_boot_01 --cloud=aws", shell=True)
@@ -133,14 +138,18 @@ class TestConfig:
 
         VERBOSE(result)
 
+        assert "'name': 'test_boot_02'" in result
+
     def test_04_stop(self):
-        HEADING()
+        HEADING("this test will fail, press Ctrl-C to skip")
 
         StopWatch.start("cms aws stop")
         result = Shell.execute("cms aws stop test_boot_02 --parallel --processors=3", shell=True)
         StopWatch.stop("cms aws stop")
 
         VERBOSE(result)
+
+        assert "'name': 'test_boot_02'" in result
 
     def test_ping(self):
         HEADING()
@@ -165,12 +174,56 @@ class TestConfig:
 
         assert "ok" in result
 
+    def test_01_run(self):
+        HEADING()
+
+        StopWatch.start("cms aws run dryrun")
+        result = Shell.execute("cms aws run --name=test_boot_01 --username=ubuntu uname --dryrun", shell=True)
+        StopWatch.stop("cms aws run dryrun")
+
+        VERBOSE(result)
+
+        assert "run command uname on vms: ['test_boot_01']" in result
+
+    def test_02_run(self):
+        HEADING()
+
+        StopWatch.start("cms aws run dryrun")
+        result = Shell.execute("cms aws run --name=test_boot_01 --username=ubuntu uname", shell=True)
+        StopWatch.stop("cms aws run dryrun")
+
+        VERBOSE(result)
+
+        assert "Linux" in result
+
+    def test_01_script(self):
+        HEADING()
+
+        StopWatch.start("cms aws script dryrun")
+        result = Shell.execute("cms aws script --name=test_boot_01 --username=ubuntu ./test_aws.sh --dryrun", shell=True)
+        StopWatch.stop("cms aws script dryrun")
+
+        VERBOSE(result)
+
+        assert "run script ./test_aws.sh on vms: ['test_boot_01']" in result
+
+    def test_02_script(self):
+        HEADING()
+
+        StopWatch.start("cms aws script dryrun")
+        result = Shell.execute("cms aws script --name=test_boot_01 --username=ubuntu ./test_aws.sh", shell=True)
+        StopWatch.stop("cms aws script dryrun")
+
+        VERBOSE(result)
+
+        assert "Linux" in result
+
     def test_01_start(self):
         HEADING()
 
-        startWatch.start("cms aws start dryrun")
+        StopWatch.start("cms aws start dryrun")
         result = Shell.execute("cms aws start test_boot_02 --dryrun", shell=True)
-        startWatch.start("cms aws start dryrun")
+        StopWatch.stop("cms aws start dryrun")
 
         VERBOSE(result)
 
@@ -181,9 +234,9 @@ class TestConfig:
     def test_02_start(self):
         HEADING()
 
-        startWatch.start("cms aws start dryrun")
+        StopWatch.start("cms aws start dryrun")
         result = Shell.execute("cms aws start test_boot_02 --parallel --processors=3 --dryrun", shell=True)
-        startWatch.start("cms aws start dryrun")
+        StopWatch.stop("cms aws start dryrun")
 
         VERBOSE(result)
 
@@ -194,71 +247,79 @@ class TestConfig:
     def test_03_start(self):
         HEADING()
 
-        startWatch.start("cms aws start")
+        StopWatch.start("cms aws start")
         result = Shell.execute("cms aws start test_boot_02", shell=True)
-        startWatch.start("cms aws start")
+        StopWatch.stop("cms aws start")
 
         VERBOSE(result)
+
+        assert "'name': 'test_boot_02'" in result
 
     def test_04_start(self):
-        HEADING()
+        HEADING("this test will fail, press Ctrl-C to skip")
 
-        startWatch.start("cms aws start")
+        StopWatch.start("cms aws start")
         result = Shell.execute("cms aws start test_boot_02 --parallel --processors=3", shell=True)
-        startWatch.start("cms aws start")
+        StopWatch.stop("cms aws start")
 
         VERBOSE(result)
+
+        assert "'name': 'test_boot_02'" in result
 
     def test_01_terminate(self):
         HEADING()
 
-        terminateWatch.delete("cms aws delete dryrun")
+        StopWatch.start("cms aws delete dryrun")
         result = Shell.execute("cms aws delete test_boot_01 --dryrun", shell=True)
-        deleteWatch.delete("cms aws delete dryrun")
+        StopWatch.stop("cms aws delete dryrun")
 
         VERBOSE(result)
 
-        assert "delete nodes ['test_boot_02']" in result
+        assert "delete nodes ['test_boot_01']" in result
         assert "option - iter" in result
         assert "processors - None" in result
 
     def test_02_terminate(self):
         HEADING()
 
-        terminateWatch.terminate("cms aws terminate dryrun")
+        StopWatch.start("cms aws terminate dryrun")
         result = Shell.execute("cms aws terminate test_boot_01 --parallel --processors=3 --dryrun", shell=True)
-        terminateWatch.terminate("cms aws terminate dryrun")
+        StopWatch.stop("cms aws terminate dryrun")
 
         VERBOSE(result)
 
-        assert "terminate nodes ['test_boot_02']" in result
+        assert "terminate nodes ['test_boot_01']" in result
         assert "option - pool" in result
         assert "processors - 3" in result
 
     def test_03_terminate(self):
         HEADING()
 
-        terminateWatch.terminate("cms aws terminate")
+        StopWatch.start("cms aws terminate")
         result = Shell.execute("cms aws terminate test_boot_01", shell=True)
-        terminateWatch.terminate("cms aws terminate")
+        StopWatch.stop("cms aws terminate")
 
         VERBOSE(result)
+
+        assert "'name': 'test_boot_01'" in result
 
     def test_04_terminate(self):
-        HEADING()
+        HEADING("this test will fail, press Ctrl-C to skip")
 
-        terminateWatch.terminate("cms aws terminate")
+        StopWatch.start("cms aws terminate")
         result = Shell.execute("cms aws terminate test_boot_01 --parallel --processors=3", shell=True)
-        terminateWatch.terminate("cms aws terminate")
+        StopWatch.stop("cms aws terminate")
 
         VERBOSE(result)
+
+        assert "'name': 'test_boot_01'" in result
 
     def test_01_delete(self):
         HEADING()
 
-        deleteWatch.delete("cms aws delete dryrun")
+        StopWatch.start("cms aws delete dryrun")
         result = Shell.execute("cms aws delete test_boot_02 --dryrun", shell=True)
-        deleteWatch.delete("cms aws delete dryrun")
+        StopWatch.stop("cms aws delete dryrun")
 
         VERBOSE(result)
 
@@ -269,9 +330,9 @@ class TestConfig:
     def test_02_delete(self):
         HEADING()
 
-        deleteWatch.delete("cms aws delete dryrun")
+        StopWatch.start("cms aws delete dryrun")
         result = Shell.execute("cms aws delete test_boot_02 --parallel --processors=3 --dryrun", shell=True)
-        deleteWatch.delete("cms aws delete dryrun")
+        StopWatch.stop("cms aws delete dryrun")
 
         VERBOSE(result)
 
@@ -282,126 +343,21 @@ class TestConfig:
     def test_03_delete(self):
         HEADING()
 
-        deleteWatch.delete("cms aws delete")
+        StopWatch.start("cms aws delete")
         result = Shell.execute("cms aws delete test_boot_02", shell=True)
-        deleteWatch.delete("cms aws delete")
+        StopWatch.stop("cms aws delete")
 
         VERBOSE(result)
+
+        assert "'name': 'test_boot_02'" in result
 
     def test_04_delete(self):
-        HEADING()
+        HEADING("this test will fail, press Ctrl-C to skip")
 
-        deleteWatch.delete("cms aws delete")
+        StopWatch.start("cms aws delete")
         result = Shell.execute("cms aws delete test_boot_02 --parallel --processors=3", shell=True)
-        deleteWatch.delete("cms aws delete")
+        StopWatch.stop("cms aws delete")
 
         VERBOSE(result)
 
-
-
-
-
-
-    # def test_01_stop(self):
-    #
-    # def test_01_start(self):
-
-
-
-    #
-    # def test_01_wait(self):
-    #     HEADING()
-    #
-    #     result = Shell.execute("cms aws wait --interval=60", shell=True)
-    #
-    # def test_01_ping(self):
-    #     HEADING()
-    #
-    #     result = Shell.execute("cms aws ping t1 --count=4 --processors=5", shell=True)
-    #
-    #     VERBOSE(result)
-    #
-    #     assert "ping" in result
-    #     assert "success" in result
-    #     assert "4 packets transmitted" in result
-    #
-    # def test_01_stop(self):
-    #     HEADING()
-    #
-    #     result = Shell.execute("cms aws stop t01", shell=True)
-    #
-    #     VERBOSE(result)
-    #
-    #     assert "t01" in result
-    #     assert "stopped" in result
-    #
-    # def test_02_stop(self):
-    #     HEADING()
-    #
-    #     result = Shell.execute("cms aws stop t02", shell=True)
-    #
-    #     VERBOSE(result)
-    #
-    #     assert "t02" in result
-    #     assert "stopped" in result
-    #
-    # def test_01_start(self):
-    #     HEADING()
-    #
-    #     result = Shell.execute("cms aws start t01", shell=True)
-    #
-    #     VERBOSE(result)
-    #
-    #     assert "t01" in result
-    #     assert "t01" in result
-    #     assert "running" in result
-    #
-    #
-    # def test_01_terminate(self):
-    #     HEADING()
-    #
-    #     result = Shell.execute("cms aws delete t03", shell=True)
-    #
-    #     VERBOSE(result)
-    #
-    #     assert "t03" in result
-    #     assert "deleted" in result
-    #
-    # def test_01_status(self):
-    #     HEADING()
-    #
-    #     result = Shell.execute("cms aws status t01", shell=True)
-    #
-    #     VERBOSE(result)
-    #
-    #     assert "t01" in result
-    #     assert "running" in result
-    #
-    # def test_02_status(self):
-    #     HEADING()
-    #
-    #     result = Shell.execute("cms aws status t02", shell=True)
-    #
-    #     VERBOSE(result)
-    #
-    #     assert "t02" in result
-    #     assert "stopped" in result
-    #
-    # def test_03_status(self):
-    #     HEADING()
-    #
-    #     result = Shell.execute("cms aws status t03", shell=True)
-    #
-    #     VERBOSE(result)
-    #
-    #     assert "deleted" in result
-    #
-    # def test_01_list(self):
-    #     HEADING()
-    #
-    #     result = Shell.execute("cms aws list t0", shell=True)
-    #
-    #     VERBOSE(result)
-    #
-    #     assert "'name': 't0'" in result
-    #     assert "'id': 'i-032d5c07fcfaf5b8b'" in result
+        assert "'name': 'test_boot_02'" in result

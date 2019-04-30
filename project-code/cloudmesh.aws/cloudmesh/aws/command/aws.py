@@ -378,6 +378,7 @@ class AwsCommand(PluginCommand):
             else:
                 pprint(provider.destroy(names, **params))
 
+        #ok
         elif arguments.delete:
             """vm delete [NAMES] [--cloud=CLOUD] [--parallel] [--processors=PROCESSORS] [--dryrun]"""
             if arguments.NAMES:
@@ -400,7 +401,7 @@ class AwsCommand(PluginCommand):
             else:
                 pprint(provider.destroy(names, **params))
 
-        # username, secgroup, not implemented
+        # TODO: username, secgroup
         elif arguments.boot:
             """
                             vm boot [--name=VMNAMES]
@@ -465,7 +466,7 @@ keypair name - {}""".format(names, params['image'], params['flavor'], public, se
             else:
                 pprint(provider.create(names=names, **params))
 
-        # output not implemented
+        # TODO: OUTPUT
         elif arguments.list:
             """
             vm list [NAMES]
@@ -492,7 +493,7 @@ keypair name - {}""".format(names, params['image'], params['flavor'], public, se
 
             pprint(res)
 
-        # not implementd
+        # TODO
         elif arguments.info:
             """
             vm info [--cloud=CLOUD]
@@ -500,12 +501,12 @@ keypair name - {}""".format(names, params['image'], params['flavor'], public, se
             """
             print("functionality not implemented")
 
-        # not implementd
+        # TODO
         elif arguments.rename:
             """vm rename [OLDNAMES] [NEWNAMES] [--force] [--dryrun]"""
             print("functionality not implemented")
 
-        # not implementd
+        # TODO
         elif arguments.ip and arguments.show:
             """vm ip show [NAMES]
                        [--group=GROUP]
@@ -526,32 +527,63 @@ keypair name - {}""".format(names, params['image'], params['flavor'], public, se
 
             pprint(provider.assign_public_ip(names))
 
-        # not implementd
+        # TODO
         elif arguments.ip and arguments.inventory:
             """vm ip inventory [NAMES]"""
             print("list ips that could be assigned")
 
-        # not implementd
+        # TODO
         elif arguments.default:
             """vm default [options...]"""
             print("functionality not implemented")
 
-        # TODO
+        # ok
         elif arguments.run:
-            """vm run [--name=VMNAMES] [--username=USERNAME] [--dryrun] COMMAND"""
-            pass
+            """vm run [--name=VMNAMES] [--username=USERNAME] [--dryrun] [COMMAND ...]"""
+            # cms aws run --name=t --username=ubuntu uname
+            clouds, names = Arguments.get_cloud_and_names("run", arguments, variables)
+            username = arguments['--username']
+            command = arguments.COMMAND
 
-        # TODO
+            name_ips = {}
+            cursor = database.db['aws-node']
+            for name in names:
+                for node in cursor.find({'name':name}):
+                    name_ips[name] = node['public_ips']
+
+            if arguments['--dryrun']:
+                print("run command {} on vms: {}".format(command, names))
+            else:
+                provider.ssh(name_ips, username=username, command=command)
+
+        # BUG in call command
         elif arguments.script:
             """vm script [--name=NAMES] [--username=USERNAME] [--dryrun] SCRIPT"""
-            pass
+            # cms aws script --name=t --username=ubuntu tests/test_aws.sh
+            clouds, names = Arguments.get_cloud_and_names("run", arguments, variables)
+            username = arguments['--username']
+            script = arguments.SCRIPT
+
+            name_ips = {}
+            cursor = database.db['aws-node']
+            for name in names:
+                for node in cursor.find({'name':name}):
+                    name_ips[name] = node['public_ips']
+
+            if arguments['--dryrun']:
+                print("run script {} on vms: {}".format(script, names))
+            else:
+                provider.ssh(name_ips, username=username, script=script)
 
         # TODO
         elif arguments.resize:
             """vm resize [NAMES] [--size=SIZE]"""
             pass
 
-        # TODO: FIX BUG
+        # TODO
+        # shh run command in implemented as aws run
+        # not sure what to do with this command
+        # since ssh into multiple vms at the same time doesn't make a lot of sense
         elif arguments.ssh:
             """
             vm ssh [NAMES] [--username=USER]
@@ -563,37 +595,45 @@ keypair name - {}""".format(names, params['image'], params['flavor'], public, se
             """
             if arguments.NAMES:
                 variables['vm'] = arguments.NAMES
+            clouds, names = Arguments.get_cloud_and_names("list", arguments, variables)
 
-            names = Arguments.get_names(arguments, variables)
-            ip = arguments['--ip'] or list(provider.get_publicIPs(names).values())[0][0]
-            username2 = arguments['--username']
-
-            provider.ssh(username=username, ip=ip)
-
-        # not implementd
-        elif arguments.console:
-            """vm console [NAME] [--force]"""
-
-            names = Arguments.get_names(arguments, variables)
-
+            ips = {}
+            cursor = database.db['aws-node']
             for name in names:
-                # r = vm.console(name,force=argument.force)
-                Console.msg("{label} {name}".format(label="console", name=name))
-            return
+                for node in cursor.find({'name':name}):
+                    pprint(node)
 
-        # not implementd
+            username = arguments['--username']
+            ip = arguments['--ip']
+
+            params = {}
+
+            quiet = arguments['--quiet']
+            if quiet:
+                params['quiet'] = quiet
+
+            command = arguments['--command']
+            if command:
+                params['command'] = command
+
+            modify_host = arguments['--modify-knownhosts']
+            if modify_host:
+                params['modify_host'] = modify_host
+
+            provider.ssh(username=username, ip=ip, **params)
+
+        # TODO
         elif arguments.wait:
             """vm wait [--cloud=CLOUD] [--interval=SECONDS]"""
-            variables['wait'] = arguments['--interval']
-            # print("waits for the vm till its ready and one can login")
+            print("waits for the vm till its ready and one can login")
 
-        # not implementd
+        # TODO
         elif arguments.username:
             """vm username USERNAME [NAMES] [--cloud=CLOUD]"""
             print("sets the username for the vm")
 
         elif arguments.debug:
-            print(provider.p.cloudman.ex_list_security_groups())
+            print(provider.p.cloudman.ex_list_floating_ips())
             # print(provider.loop(names, abs, option='iter',processors=3))
 
         return
