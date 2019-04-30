@@ -1,0 +1,95 @@
+swagger: "2.0"
+info:
+  description: |-
+
+    VM is a service to manage virtual machines.
+
+  version: 3.1.1
+  x-date: 02-15-2019
+  x-status: defined
+  title: Virtual Machine
+  termsOfService: https://github.com/cloudmesh-community/nist/blob/master/LICENSE.txt
+  contact:
+    name: NIST BDRA Interface Subgroup Service Example
+    url: https://cloudmesh-community.github.io/nist/spec/
+  license:
+    name: Apache
+host: localhost:8080
+basePath: /cloudmesh/v3
+schemes:
+  - http
+consumes:
+  - application/json
+produces:
+  - application/json
+paths:
+  /vm:
+    get:
+      tags:
+        - VM
+      summary: Returns the list of the vms
+      description: Returns the list of the vms
+      operationId: cloudmesh.vm.get
+      produces:
+        - application/json
+      parameters:
+        - name: cloud
+          in: query
+          type: string
+          description: 'specify the cloud from which we list, if ommitted all clouds are returned.'
+          required: false
+      responses:
+        '200':
+          description: Listing the VMs
+          schema:
+            type: array
+            items:
+              $ref: '#/definitions/VM'
+definitions:
+  VM:
+    type: object
+    properties:
+      provider:
+        type: string
+        description: Name of the provider
+      id:
+        type: string
+        description: a unique id for the vm
+      name:
+        type: string
+        description: the name of the vm
+      image:
+        type: string
+        description: the image for the vm
+      region:
+        type: string
+        description: an optional region
+      size:
+        type: string
+        description: The size of the vm
+      state:
+        type: string
+        description: The state of the vm
+      private_ips:
+        type: string
+        description: The private IPs
+      public_ips:
+        type: string
+        description: The public IPS
+      metadata:
+        type: string
+        description: The meta data passed along to the VM
+      timestamp:
+        description: timestamps associated with the resource
+        $ref: '#/definitions/Timestamp'
+    example:
+      image: image
+      metadata: metadata
+      size: size
+      provider: provider
+      name: name
+      private_ips: private_ips
+      id: id
+      state: state
+      region: region
+      public_ips: public_ips

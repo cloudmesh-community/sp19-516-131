@@ -1,5 +1,5 @@
 # from cloudmesh.aws.api.manager import Manager
-from cloudmesh.aws.api.Provider import Provider
+from cloudmesh.aws.api.VmProvider import Provider
 
 from cloudmesh.common.Printer import Printer
 from cloudmesh.common.console import Console
@@ -11,11 +11,14 @@ from cloudmesh.shell.command import command, map_parameters
 from cloudmesh.variables import Variables
 from cloudmesh.DEBUG import VERBOSE
 from cloudmesh.management.configuration.arguments import Arguments
-from cloudmesh.common.Shell import Shell
+from cloudmesh.common3.Shell import Shell as Shell3
 from cloudmesh.common.error import Error
 from pprint import pprint
 
+from datetime import datetime
+import hashlib
 
+from libcloud.compute.base import NodeSize
 class AwsCommand(PluginCommand):
 
     # noinspection PyUnusedLocal
@@ -26,13 +29,13 @@ class AwsCommand(PluginCommand):
 
             Usage:
                 vm ping [NAMES] [--cloud=CLOUDS] [--count=N] [--processors=PROCESSORS]
-                vm check [NAMES] [--cloud=CLOUDS] [--processors=PROCESSORS]
+                vm check [NAMES] [--cloud=CLOUDS] [--username=USERNAME] [--processors=PROCESSORS]
                 vm status [NAMES] [--cloud=CLOUDS]
                 vm console [NAME] [--force]
-                vm start [NAMES] [--cloud=CLOUD] [--dryrun]
-                vm stop [NAMES] [--cloud=CLOUD] [--dryrun]
-                vm terminate [NAMES] [--cloud=CLOUD] [--dryrun]
-                vm delete [NAMES] [--cloud=CLOUD] [--dryrun]
+                vm start [NAMES] [--cloud=CLOUD] [--parallel] [--processors=PROCESSORS] [--dryrun]
+                vm stop [NAMES] [--cloud=CLOUD] [--parallel] [--processors=PROCESSORS] [--dryrun]
+                vm terminate [NAMES] [--cloud=CLOUD] [--parallel] [--processors=PROCESSORS] [--dryrun]
+                vm delete [NAMES] [--cloud=CLOUD] [--parallel] [--processors=PROCESSORS] [--dryrun]
                 vm refresh [--cloud=CLOUDS]
                 vm list [NAMES]
                         [--cloud=CLOUDS]
@@ -78,6 +81,7 @@ class AwsCommand(PluginCommand):
                         [--output=OUTPUT]
                 vm username USERNAME [NAMES] [--cloud=CLOUD]
                 vm resize [NAMES] [--size=SIZE]
+                vm debug [NAMES]
 
             Arguments:
                 OUTPUT         the output format
@@ -122,6 +126,7 @@ class AwsCommand(PluginCommand):
                 --force          rename/ delete vms without user's confirmation
                 --command=COMMAND
                                  specify the commands to be executed
+                --parallel       execute commands in parallel
 
 
             Description:
@@ -187,45 +192,6 @@ class AwsCommand(PluginCommand):
 
             Limitations:
 
-                Azure: rename is not supported
-        """
-        """
-        ::
-
-          Usage:
-                aws flavor list
-                aws image list
-                aws list
-                aws info [--name=NAMES]
-                aws reboot [--name=NAMES]
-                aws ip show [--name=NAMES]
-                aws ping [--name=NAMES]
-                         [--timer=TIMEOUT]
-                aws check [--name=NAMES]
-                          [--keypair_name=KEYPAIR_NAME]
-                          [--timer=TIMEOUT]
-                aws ppp [--name=NAMES]
-
-          Arguments:
-            NAMES       server name. By default it is set to the name of last vm from database.
-            TIMEOUT     wait time. By default it is set to the last timer used.
-
-
-          Options:
-                --name=NAMES        give the name of the virtual machine
-                --timer=TIMEOUT     specify the wait time for processes
-
-          Description:
-                commands used to boot, start or delete servers of a cloud
-
-                aws list flavors
-                    list the flavors from the cloud
-
-                aws list images
-                    list the images from the cloud
-
-                aws list
-                    list the vms on the cloud
         """
 
         map_parameters(arguments,
@@ -258,79 +224,183 @@ class AwsCommand(PluginCommand):
         # pprint(variables)
 
         provider = Provider()
-
         database = CmDatabase()
-        database.connect()
 
+        # ok, but not tested
         if arguments.refresh:
+            """vm refresh [--cloud=CLOUDS]"""
+            provider.list()
+            provider.flavors()
+            provider.images()
 
-            names = []
-
-            clouds, names = Arguments.get_cloud_and_names("refresh", arguments, variables)
-
-            return ""
-
+        # ok
         elif arguments.ping:
+            """vm ping [NAMES] [--cloud=CLOUDS] [--count=N] [--processors=PROCESSORS]"""
+            # cms aws ping t --cloud=aws --count=3 --processors=3
             if arguments.NAMES:
                 variables['vm'] = arguments.NAMES
-
-            pings = int(arguments['--count'] or 3)
-            processors = int(arguments['--processors'] or 10)
-
             clouds, names = Arguments.get_cloud_and_names("ping", arguments, variables)
 
-            public_ips = list(provider.get_publicIPs(names).values())
+            params = {}
+
+            count = arguments['--count']
+            if count:
+                params['count'] = int(count)
+
+            processors = arguments['--processors']
+            if processors:
+                params['processors'] = int(processors[0])
+
+            # gets public ips from database
+            public_ips = []
+            cursor = database.db['aws-node']
+            for name in names:
+                for node in cursor.find({'name':name}):
+                    public_ips.append(node['public_ips'])
+            public_ips = [y for x in public_ips for y in x]
+            # print(public_ips)
+
+            Shell3.pings(ips=public_ips, **params)
+
+        # ok
+        elif arguments.check:
+            """vm check [NAMES] [--cloud=CLOUDS] [--username=USERNAME] [--processors=PROCESSORS]"""
+            # cms aws check t --cloud=aws --username=ubuntu --processors=3
+            if arguments.NAMES:
+                variables['vm'] = arguments.NAMES
+            clouds, names = Arguments.get_cloud_and_names("ping", arguments, variables)
+
+            params = {}
+
+            params['key'] = provider.p.spec["credentials"]['EC2_PRIVATE_KEY_FILE_PATH'] + provider.p.spec["credentials"]['EC2_PRIVATE_KEY_FILE_NAME']
+
+            params['username'] = arguments['--username']  # or get from db
+
+            processors = arguments['--processors']
+            if processors:
+                params['processors'] = int(processors[0])
+
+            # gets public ips from database
+            public_ips = []
+            cursor = database.db['aws-node']
+            for name in names:
+                for node in cursor.find({'name':name}):
+                    public_ips.append(node['public_ips'])
             public_ips = [y for x in public_ips for y in x]
 
-            list(map(self.__console_response__, provider.ping(public_ips, pings, processors)))
+            Shell3.checks(hosts=public_ips, **params)
 
-        elif arguments.check:
-            print("Not Supported by Libcloud")
-
+        # ok
         elif arguments.status:
+            """vm status [NAMES] [--cloud=CLOUDS]"""
             if arguments.NAMES:
                 variables['vm'] = arguments.NAMES
             clouds, names = Arguments.get_cloud_and_names("status", arguments, variables)
 
-            pprint(provider.status(names))
+            # gets status from database
+            status = {}
+            cursor = database.db['aws-node']
+            for name in names:
+                for node in cursor.find({'name':name}):
+                    status[name] = node['state']
 
+            pprint(status)
+
+        #ok
         elif arguments.start:
+            """vm start [NAMES] [--cloud=CLOUD] [--parallel] [--processors=PROCESSORS] [--dryrun]"""
+            # cms aws start t --parallel --processors=3
             if arguments.NAMES:
                 variables['vm'] = arguments.NAMES
-            wait = int(variables['wait']) or 0
-
             clouds, names = Arguments.get_cloud_and_names("start", arguments, variables)
 
-            pprint(provider.start(names, wait=wait))
+            params = {}
 
+            processors = arguments['--processors']
+
+            if arguments['--parallel']:
+                params['option'] = 'pool'
+                if processors:
+                    params['processors'] = int(processors[0])
+            else:
+                params['option'] = 'iter'
+
+            if arguments['--dryrun']:
+                print("start nodes {}\noption - {}\nprocessors - {}".format(names, params['option'], processors))
+            else:
+                pprint(provider.start(names, **params))
+
+        #ok
         elif arguments.stop:
+            """vm stop [NAMES] [--cloud=CLOUD] [--parallel] [--processors=PROCESSORS] [--dryrun]"""
+            # cms aws stop t --parallel --processors=2
             if arguments.NAMES:
                 variables['vm'] = arguments.NAMES
-            wait = int(variables['wait']) or 0
-
             clouds, names = Arguments.get_cloud_and_names("stop", arguments, variables)
 
-            pprint(provider.stop(names, wait=wait))
+            params = {}
 
+            processors = arguments['--processors']
+
+            if arguments['--parallel']:
+                params['option'] = 'pool'
+                if processors:
+                    params['processors'] = int(processors[0])
+            else:
+                params['option'] = 'iter'
+
+            if arguments['--dryrun']:
+                print("stop nodes {}\noption - {}\nprocessors - {}".format(names, params['option'], processors))
+            else:
+                pprint(provider.stop(names, **params))
+
+        #ok
         elif arguments.terminate:
+            """vm terminate [NAMES] [--cloud=CLOUD] [--parallel] [--processors=PROCESSORS] [--dryrun]"""
+            # cms aws terminate t --parallel --processors=2
             if arguments.NAMES:
                 variables['vm'] = arguments.NAMES
-            wait = int(variables['wait']) or 0
-
             clouds, names = Arguments.get_cloud_and_names("terminate", arguments, variables)
 
-            pprint(provider.destroy(names, wait=wait))
+            params = {}
 
-        ## terminate & delete difference??
+            processors = arguments['--processors']
+
+            if arguments['--parallel']:
+                params['option'] = 'pool'
+                if processors:
+                    params['processors'] = int(processors[0])
+            else:
+                params['option'] = 'iter'
+
+            if arguments['--dryrun']:
+                print("terminate nodes {}\noption - {}\nprocessors - {}".format(names, params['option'], processors))
+            else:
+                pprint(provider.destroy(names, **params))
+
         elif arguments.delete:
+            """vm delete [NAMES] [--cloud=CLOUD] [--parallel] [--processors=PROCESSORS] [--dryrun]"""
             if arguments.NAMES:
                 variables['vm'] = arguments.NAMES
-            wait = int(variables['wait']) or 0
+            clouds, names = Arguments.get_cloud_and_names("terminate", arguments, variables)
 
-            clouds, names = Arguments.get_cloud_and_names("delete", arguments, variables)
+            params = {}
 
-            pprint(provider.destroy(names, wait=wait))
+            processors = arguments['--processors']
 
+            if arguments['--parallel']:
+                params['option'] = 'pool'
+                if processors:
+                    params['processors'] = int(processors[0])
+            else:
+                params['option'] = 'iter'
+
+            if arguments['--dryrun']:
+                print("delete nodes {}\noption - {}\nprocessors - {}".format(names, params['option'], processors))
+            else:
+                pprint(provider.destroy(names, **params))
+
+        # username, secgroup, not implemented
         elif arguments.boot:
             """
                             vm boot [--name=VMNAMES]
@@ -352,83 +422,145 @@ class AwsCommand(PluginCommand):
                                     [--key=KEY]
                                     [--dryrun]
             """
-            if arguments['name']:
-                names = Parameter.expand(arguments['name'])
-                # username = arguments['username'] username is not supported by libcloud ec2
-                image = arguments['image']
-                flavor = arguments['flavor']
-                # public = not sure what it means
-                secgroups = Parameter.expand(arguments['secgroup'])
-                key = arguments['key']
-                for name in names:
-                    pprint(provider.create(name=name, image=image, flavor=flavor, ex_security_groups=secgroups, ex_keyname=key))
+            if arguments['--name']:
+                # cms aws boot --name=t --cloud=aws --username=root --image=ami-08692d171e3cf02d6  --flavor=t2.micro --public --secgroup=group1 --key=aws_cert
+                names = Parameter.expand(arguments['--name'])
 
             elif arguments['n']:
+                # cms aws boot --n=2 --cloud=aws --username=root --image=ami-08692d171e3cf02d6  --flavor=t2.micro --public --secgroup=group1 --key=aws_cert
                 n = int(arguments['n'])
-                # username = arguments['username'] username is not supported by libcloud ec2
-                image = arguments['image']
-                flavor = arguments['flavor']
-                # public = not sure what it means
-                secgroups = Parameter.expand(arguments['secgroup'])
-                key = arguments['key']
-                for i in range(n):
-                    pprint(provider.create(image=image, flavor=flavor, ex_security_groups=secgroups, ex_keyname=key))
-            # cms aws boot --name=test --secgroup=sg-8b3fcbc3 --key=aws_cert
+                names = []
+                for i in range(n):  # generate random names
+                    m = hashlib.blake2b(digest_size=8)
+                    m.update(str(datetime.utcnow()).encode('utf-8'))
+                    names.append(m.hexdigest())
 
+            else:
+                print("please provide name or count to boot vm")
+
+            params = {}
+            # username = arguments['--username']
+            params['image'] = arguments['--image']
+            params['flavor'] = arguments['--flavor']
+
+            public = arguments['--public']
+            if public:
+                params['ex_assign_public_ip'] = public
+
+            secgroup = Parameter.expand(arguments['--secgroup'])
+            if secgroup:
+                params['ex_security_groups'] = secgroup
+
+            key = arguments['--key']
+            if key:
+                params['ex_keyname'] = key
+
+            if arguments['--dryrun']:
+                print("""create nodes {}
+image - {}
+flavor - {}
+assign public ip - {}
+security groups - {}
+keypair name - {}""".format(names, params['image'], params['flavor'], public, secgroup, key))
+            else:
+                pprint(provider.create(names=names, **params))
+
+        # output not implemented
         elif arguments.list:
+            """
+            vm list [NAMES]
+                    [--cloud=CLOUDS]
+                    [--output=OUTPUT]
+                    [--refresh]
+            """
+            # cms aws t --cloud=aws --refresh
             if arguments.NAMES:
                 variables['vm'] = arguments.NAMES
-
             clouds, names = Arguments.get_cloud_and_names("list", arguments, variables)
 
-            pprint(provider.info(names))
+            if arguments['--refresh']:
+                provider.list()
 
+            if names:
+                res = []
+                cursor = database.db['aws-node']
+                for name in names:
+                    for node in cursor.find({'name':name}):
+                        res.append(node)
+            else:
+                print("list all nodes in db, not implemented")
+
+            pprint(res)
+
+        # not implementd
         elif arguments.info:
-            if arguments.NAMES:
-                variables['vm'] = arguments.NAMES
+            """
+            vm info [--cloud=CLOUD]
+                    [--output=OUTPUT]
+            """
+            print("functionality not implemented")
 
-            clouds, names = Arguments.get_cloud_and_names("info", arguments, variables)
-
-            pprint(provider.info(names))
-
+        # not implementd
         elif arguments.rename:
-            print("rename, cannot be implemented")
+            """vm rename [OLDNAMES] [NEWNAMES] [--force] [--dryrun]"""
+            print("functionality not implemented")
 
+        # not implementd
         elif arguments.ip and arguments.show:
+            """vm ip show [NAMES]
+                       [--group=GROUP]
+                       [--cloud=CLOUD]
+                       [--output=OUTPUT]
+                       [--refresh]
+            """
             clouds, names = Arguments.get_cloud_and_names("ip", arguments, variables)
             pprint(get_publicIPs(names))
 
+        # TODO
         elif arguments.ip and arguments.assign:
+            """
+            vm ip assign [NAMES]
+                      [--cloud=CLOUD]
+            """
             clouds, names = Arguments.get_cloud_and_names("ip", arguments, variables)
 
             pprint(provider.assign_public_ip(names))
 
+        # not implementd
         elif arguments.ip and arguments.inventory:
+            """vm ip inventory [NAMES]"""
             print("list ips that could be assigned")
 
+        # not implementd
         elif arguments.default:
-            print("sets defaults for the vm")
+            """vm default [options...]"""
+            print("functionality not implemented")
 
+        # TODO
         elif arguments.run:
-            """
-            vm run [--name=NAMES] [--username=USERNAME] [--dryrun] COMMAND
-
-            """
+            """vm run [--name=VMNAMES] [--username=USERNAME] [--dryrun] COMMAND"""
             pass
+
+        # TODO
         elif arguments.script:
-
-            """
-            vm script [--name=NAMES] [--username=USERNAME] [--dryrun] SCRIPT
-            """
+            """vm script [--name=NAMES] [--username=USERNAME] [--dryrun] SCRIPT"""
             pass
 
+        # TODO
         elif arguments.resize:
-            """
-            vm resize [NAMES] [--size=SIZE]
-            """
+            """vm resize [NAMES] [--size=SIZE]"""
             pass
 
+        # TODO: FIX BUG
         elif arguments.ssh:
+            """
+            vm ssh [NAMES] [--username=USER]
+                     [--quiet]
+                     [--ip=IP]
+                     [--key=KEY]
+                     [--command=COMMAND]
+                     [--modify-knownhosts]
+            """
             if arguments.NAMES:
                 variables['vm'] = arguments.NAMES
 
@@ -438,8 +570,9 @@ class AwsCommand(PluginCommand):
 
             provider.ssh(username=username, ip=ip)
 
+        # not implementd
         elif arguments.console:
-            # vm console [NAME] [--force]
+            """vm console [NAME] [--force]"""
 
             names = Arguments.get_names(arguments, variables)
 
@@ -448,21 +581,19 @@ class AwsCommand(PluginCommand):
                 Console.msg("{label} {name}".format(label="console", name=name))
             return
 
+        # not implementd
         elif arguments.wait:
+            """vm wait [--cloud=CLOUD] [--interval=SECONDS]"""
             variables['wait'] = arguments['--interval']
             # print("waits for the vm till its ready and one can login")
 
+        # not implementd
         elif arguments.username:
-
-            """
-            vm username USERNAME [NAMES] [--cloud=CLOUD]
-            """
+            """vm username USERNAME [NAMES] [--cloud=CLOUD]"""
             print("sets the username for the vm")
 
-        return
+        elif arguments.debug:
+            print(provider.p.cloudman.ex_list_security_groups())
+            # print(provider.loop(names, abs, option='iter',processors=3))
 
-    def __console_response__(self, x):
-        if x[1] == 0:
-            Console.ok("ping " + x[0] + ' success.')
-        else:
-            Console.error("ping " + x[0] + ' failure. return code: ' + str(x[1]))
+        return
