@@ -7,8 +7,8 @@ owner:
     semester: sp19
 project:
     - title: AWS VM Management
-      code: https://github.com/cloudmesh-community/sp19-516-131/blob/master/project-code/cloudmesh.aws/cloudmesh/aws/api/Provider.py
-      code2: https://github.com/cloudmesh-community/sp19-516-131/blob/master/project-code/cloudmesh.aws/cloudmesh/aws/command/aws.py
+      code:
+          - https://github.com/cloudmesh-community/sp19-516-131/tree/master/project-code/cloudmesh.aws
       pytest:
           - https://github.com/cloudmesh-community/sp19-516-131/blob/master/project-code/cloudmesh.aws/tests/test_aws.py
     - status: 90%
