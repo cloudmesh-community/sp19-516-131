@@ -5,10 +5,21 @@ owner:
     hid: sp19-516-131
     community: e516
     semester: sp19
+section:
+    - title: check
+      code: https://github.com/cloudmesh/cloudmesh-cloud/blob/master/cloudmesh/common3/Shell.py
+      pytest: https://github.com/cloudmesh/cloudmesh-cloud/blob/master/tests/test_check.py
+    - title: ping
+      code: https://github.com/cloudmesh/cloudmesh-cloud/blob/master/cloudmesh/common3/Shell.py
+      pytest: https://github.com/cloudmesh/cloudmesh-cloud/blob/master/tests/test_ping.py
 project:
-    - title: AWS VM Management
-      code:
-          - https://github.com/cloudmesh-community/sp19-516-131/tree/master/project-code/cloudmesh.aws
-      pytest:
-          - https://github.com/cloudmesh-community/sp19-516-131/blob/master/project-code/cloudmesh.aws/tests/test_aws.py
-    - status: 90%
+    - title: Libcloud Provider
+      code: https://github.com/cloudmesh/cloudmesh-cloud/blob/master/cloudmesh/compute/libcloud/Provider.py
+      pytest: TBD
+    - title: VM Provider
+      code: https://github.com/cloudmesh/cloudmesh-cloud/blob/master/cloudmesh/compute/vm/Provider.py
+      pytest: TBD
+    - title: VM Command
+      code: https://github.com/cloudmesh/cloudmesh-cloud/blob/master/cloudmesh/vm/command/vm.py
+      pytest: https://github.com/cloudmesh/cloudmesh-cloud/blob/master/tests/test_cms_aws.py
+    - status: 95%

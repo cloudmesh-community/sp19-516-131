@@ -19,7 +19,7 @@ import pytest
 from cloudmesh.common.StopWatch import StopWatch
 
 @pytest.mark.incremental
-class TestConfig:
+class Test_aws:
 
     def setup(self):
         conf = Config("~/.cloudmesh/cloudmesh4.yaml")["cloudmesh"]
@@ -30,13 +30,13 @@ class TestConfig:
         HEADING()
 
         StopWatch.start("cms aws boot dryrun")
-        result = Shell.execute("cms aws boot --name=test_boot_01 --cloud=aws --username=root --image=ami-08692d171e3cf02d6  --flavor=t2.micro --public --key={} --dryrun".format(self.key), shell=True)
+        result = Shell.execute("cms aws boot --name=test_boot_01 --cloud=aws --username=root --image=ubuntu/images/hvm-ssd/ubuntu-xenial-16.04-amd64-server-20190212  --flavor=t2.micro --public --key={} --dryrun".format(self.key), shell=True)
         StopWatch.stop("cms aws boot dryrun")
 
         VERBOSE(result)
 
         assert "create nodes ['test_boot_01']" in result
-        assert "image - ami-08692d171e3cf02d6" in result
+        assert "image - ubuntu/images/hvm-ssd/ubuntu-xenial-16.04-amd64-server-20190212" in result
         assert "flavor - t2.micro" in result
         assert "assign public ip - True" in result
         assert "security groups - None" in result
@@ -46,13 +46,13 @@ class TestConfig:
         HEADING()
 
         StopWatch.start("cms aws boot dryrun")
-        result = Shell.execute("cms aws boot --n=2 --cloud=aws --username=root --image=ami-08692d171e3cf02d6  --flavor=t2.micro --public --key={} --dryrun".format(self.key), shell=True)
+        result = Shell.execute("cms aws boot --n=2 --cloud=aws --username=root --image=ubuntu/images/hvm-ssd/ubuntu-xenial-16.04-amd64-server-20190212  --flavor=t2.micro --public --key={} --dryrun".format(self.key), shell=True)
         StopWatch.stop("cms aws boot dryrun")
 
         VERBOSE(result)
 
         assert "create nodes" in result
-        assert "image - ami-08692d171e3cf02d6" in result
+        assert "image - ubuntu/images/hvm-ssd/ubuntu-xenial-16.04-amd64-server-20190212" in result
         assert "flavor - t2.micro" in result
         assert "assign public ip - True" in result
         assert "security groups - None" in result
@@ -62,12 +62,40 @@ class TestConfig:
         HEADING()
 
         StopWatch.start("cms aws boot")
-        result = Shell.execute("cms aws boot --name=test_boot_01,test_boot_02 --cloud=aws --username=root --image=ami-08692d171e3cf02d6  --flavor=t2.micro --public --key={}".format(self.key), shell=True)
+        result = Shell.execute("cms aws boot --name=test_boot_01,test_boot_02 --cloud=aws --username=root --image=ubuntu/images/hvm-ssd/ubuntu-xenial-16.04-amd64-server-20190212  --flavor=t2.micro --public --key={}".format(self.key), shell=True)
         StopWatch.stop("cms aws boot")
 
         VERBOSE(result)
 
-        assert "'name': 'test_boot_01'" in result
+        assert "cm.name" in result
+        assert "cm.cloud" in result
+        assert "state" in result
+        assert "image" in result
+        assert "public_ips" in result
+        assert "private_ips" in result
+        assert "cm.kind" in result
+        # cannot test result as the immediate response may not contain fully booted informatin
+        # assert 'test_boot_01' in result
+        # assert 'test_boot_02' in result
+        # assert 'aws' in result
+        # assert 'node' in result
+
+    def test_04_boot(self):
+        HEADING()
+
+        StopWatch.start("cms aws boot")
+        result = Shell.execute("cms aws boot --n=2 --cloud=aws --username=root --image=ubuntu/images/hvm-ssd/ubuntu-xenial-16.04-amd64-server-20190212  --flavor=t2.micro --public --key={}".format(self.key), shell=True)
+        StopWatch.stop("cms aws boot")
+
+        VERBOSE(result)
+
+        assert "cm.name" in result
+        assert "cm.cloud" in result
+        assert "state" in result
+        assert "image" in result
+        assert "public_ips" in result
+        assert "private_ips" in result
+        assert "cm.kind" in result
 
     def test_list(self):
         HEADING()
@@ -129,9 +157,7 @@ class TestConfig:
 
         VERBOSE(result)
 
-        assert "'name': 'test_boot_02'" in result
-
-
+        assert "test_boot_02" in result
 
     def test_ping(self):
         HEADING()

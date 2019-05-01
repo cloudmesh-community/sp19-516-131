@@ -26,15 +26,6 @@ class Test_aws:
         cred = conf["cloud"]['aws']["credentials"]
         self.key = (cred['EC2_PRIVATE_KEY_FILE_NAME']).split('.')[0]
 
-    def test_04_boot(self):
-        HEADING("this test will fail, press Ctrl-C to skip")
-
-        StopWatch.start("cms aws boot")
-        result = Shell.execute("cms aws boot --n=2 --cloud=aws --username=root --image=ami-08692d171e3cf02d6  --flavor=t2.micro --public --key={}".format(self.key), shell=True)
-        StopWatch.stop("cms aws boot")
-
-        VERBOSE(result)
-
     def test_04_stop(self):
         HEADING("this test will fail, press Ctrl-C to skip")
 

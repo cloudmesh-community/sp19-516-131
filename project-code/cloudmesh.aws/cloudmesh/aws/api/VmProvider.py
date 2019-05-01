@@ -7,15 +7,16 @@ class Provider(VmProvider):
         super().__init__(name=name, configuration=configuration)
         self.p = LibCloudProvider(name=name, configuration=configuration)
 
-    def stop(self, names=None, **kwargs):
-        return self.loop(names, self.p.stop, **kwargs)
-
-    def start(self, names=None, **kwargs):
-        return self.loop(names, self.p.start, **kwargs)
-
-    def destroy(self, names=None, **kwargs):
-        return self.loop(names, self.p.destroy, **kwargs)
-
-    def ssh(self, name_ips, **kwargs):
-        for name, ips in name_ips.items():
-            self.p.ssh(name=name, ips=ips, **kwargs)
+    #  moved to cloudmesh-cloud
+    # def stop(self, names=None, **kwargs):
+    #     return self.loop(names, self.p.stop, **kwargs)
+    #
+    # def start(self, names=None, **kwargs):
+    #     return self.loop(names, self.p.start, **kwargs)
+    #
+    # def destroy(self, names=None, **kwargs):
+    #     return self.loop(names, self.p.destroy, **kwargs)
+    #
+    # def ssh(self, name_ips, **kwargs):
+    #     for name, ips in name_ips.items():
+    #         self.p.ssh(name=name, ips=ips, **kwargs)

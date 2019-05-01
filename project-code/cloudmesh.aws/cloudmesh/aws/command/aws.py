@@ -293,6 +293,7 @@ class AwsCommand(PluginCommand):
         # ok
         elif arguments.status:
             """vm status [NAMES] [--cloud=CLOUDS]"""
+            # cms aws status t --cloud=aws
             if arguments.NAMES:
                 variables['vm'] = arguments.NAMES
             clouds, names = Arguments.get_cloud_and_names("status", arguments, variables)
@@ -352,7 +353,10 @@ class AwsCommand(PluginCommand):
             if arguments['--dryrun']:
                 print("stop nodes {}\noption - {}\nprocessors - {}".format(names, params['option'], processors))
             else:
-                pprint(provider.stop(names, **params))
+                vms = provider.stop(names, **params)
+                order = provider.p.output['vm']['order']
+                header = provider.p.output['vm']['header']
+                print(Printer.flatwrite(vms, order=order, header=header, output='table'))
 
         #ok
         elif arguments.terminate:
@@ -466,8 +470,10 @@ assign public ip - {}
 security groups - {}
 keypair name - {}""".format(names, image, flavor, public, secgroup, key))
             else:
-                pprint(params)
-                pprint(provider.create(names=names, image=image, size=flavor, **params))
+                order = provider.p.output['vm']['order']
+                header = provider.p.output['vm']['header']
+                vm = provider.create(names=names, image=image, size=flavor, **params)
+                print(Printer.write(vm, order=order, header=header, output='table'))
 
         #ok
         elif arguments.list:
