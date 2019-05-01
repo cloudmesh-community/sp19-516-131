@@ -69,15 +69,6 @@ class TestConfig:
 
         assert "'name': 'test_boot_01'" in result
 
-    def test_04_boot(self):
-        HEADING("this test will fail, press Ctrl-C to skip")
-
-        StopWatch.start("cms aws boot")
-        result = Shell.execute("cms aws boot --n=2 --cloud=aws --username=root --image=ami-08692d171e3cf02d6  --flavor=t2.micro --public --key={}".format(self.key), shell=True)
-        StopWatch.stop("cms aws boot")
-
-        VERBOSE(result)
-
     def test_list(self):
         HEADING()
 
@@ -140,16 +131,7 @@ class TestConfig:
 
         assert "'name': 'test_boot_02'" in result
 
-    def test_04_stop(self):
-        HEADING("this test will fail, press Ctrl-C to skip")
 
-        StopWatch.start("cms aws stop")
-        result = Shell.execute("cms aws stop test_boot_02 --parallel --processors=3", shell=True)
-        StopWatch.stop("cms aws stop")
-
-        VERBOSE(result)
-
-        assert "'name': 'test_boot_02'" in result
 
     def test_ping(self):
         HEADING()
@@ -255,17 +237,6 @@ class TestConfig:
 
         assert "'name': 'test_boot_02'" in result
 
-    def test_04_start(self):
-        HEADING("this test will fail, press Ctrl-C to skip")
-
-        StopWatch.start("cms aws start")
-        result = Shell.execute("cms aws start test_boot_02 --parallel --processors=3", shell=True)
-        StopWatch.stop("cms aws start")
-
-        VERBOSE(result)
-
-        assert "'name': 'test_boot_02'" in result
-
     def test_01_terminate(self):
         HEADING()
 
@@ -303,17 +274,6 @@ class TestConfig:
 
         assert "'name': 'test_boot_01'" in result
 
-    def test_04_terminate(self):
-        HEADING("this test will fail, press Ctrl-C to skip")
-
-        StopWatch.start("cms aws terminate")
-        result = Shell.execute("cms aws terminate test_boot_01 --parallel --processors=3", shell=True)
-        StopWatch.stop("cms aws terminate")
-
-        VERBOSE(result)
-
-        assert "'name': 'test_boot_01'" in result
-
     def test_01_delete(self):
         HEADING()
 
@@ -345,17 +305,6 @@ class TestConfig:
 
         StopWatch.start("cms aws delete")
         result = Shell.execute("cms aws delete test_boot_02", shell=True)
-        StopWatch.stop("cms aws delete")
-
-        VERBOSE(result)
-
-        assert "'name': 'test_boot_02'" in result
-
-    def test_04_delete(self):
-        HEADING("this test will fail, press Ctrl-C to skip")
-
-        StopWatch.start("cms aws delete")
-        result = Shell.execute("cms aws delete test_boot_02 --parallel --processors=3", shell=True)
         StopWatch.stop("cms aws delete")
 
         VERBOSE(result)

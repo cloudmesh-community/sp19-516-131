@@ -425,6 +425,7 @@ class AwsCommand(PluginCommand):
             """
             if arguments['--name']:
                 # cms aws boot --name=t --cloud=aws --username=root --image=ami-08692d171e3cf02d6  --flavor=t2.micro --public --secgroup=group1 --key=aws_cert
+                # cms aws boot --name=t --image=ubuntu/images/hvm-ssd/ubuntu-xenial-16.04-amd64-server-20190212  --flavor=t2.micro --key=aws_cert
                 names = Parameter.expand(arguments['--name'])
 
             elif arguments['n']:
@@ -439,10 +440,11 @@ class AwsCommand(PluginCommand):
             else:
                 print("please provide name or count to boot vm")
 
-            params = {}
             # username = arguments['--username']
-            params['image'] = arguments['--image']
-            params['flavor'] = arguments['--flavor']
+            image = arguments['--image']
+            flavor = arguments['--flavor']
+
+            params = {}
 
             public = arguments['--public']
             if public:
@@ -462,11 +464,12 @@ image - {}
 flavor - {}
 assign public ip - {}
 security groups - {}
-keypair name - {}""".format(names, params['image'], params['flavor'], public, secgroup, key))
+keypair name - {}""".format(names, image, flavor, public, secgroup, key))
             else:
-                pprint(provider.create(names=names, **params))
+                pprint(params)
+                pprint(provider.create(names=names, image=image, size=flavor, **params))
 
-        # TODO: OUTPUT
+        #ok
         elif arguments.list:
             """
             vm list [NAMES]
@@ -474,24 +477,27 @@ keypair name - {}""".format(names, params['image'], params['flavor'], public, se
                     [--output=OUTPUT]
                     [--refresh]
             """
-            # cms aws t --cloud=aws --refresh
             if arguments.NAMES:
                 variables['vm'] = arguments.NAMES
             clouds, names = Arguments.get_cloud_and_names("list", arguments, variables)
 
+            params = {}
+
+            params['order'] = provider.p.output['vm']['order']
+            params['header'] = provider.p.output['vm']['header']
+            params['output'] = 'table'
+
             if arguments['--refresh']:
                 provider.list()
 
-            if names:
-                res = []
-                cursor = database.db['aws-node']
+            if arguments.NAMES:
+                vms = []
                 for name in names:
-                    for node in cursor.find({'name':name}):
-                        res.append(node)
+                    vms += database.find(collection='aws-node', name=name)
             else:
-                print("list all nodes in db, not implemented")
+                vms = database.find(collection='aws-node')
 
-            pprint(res)
+            print(Printer.flatwrite(vms, **params))
 
         # TODO
         elif arguments.info:
@@ -633,7 +639,8 @@ keypair name - {}""".format(names, params['image'], params['flavor'], public, se
             print("sets the username for the vm")
 
         elif arguments.debug:
-            print(provider.p.cloudman.ex_list_floating_ips())
+            pprint(provider.p.driver)
+            # print(provider.p.cloudman.ex_list_floating_ips())
             # print(provider.loop(names, abs, option='iter',processors=3))
 
         return

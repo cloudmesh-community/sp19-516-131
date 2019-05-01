@@ -1,17 +1,10 @@
 from cloudmesh.compute.libcloud.Provider import Provider as LibCloudProvider
-import platform
+from cloudmesh.mongo.CmDatabase import CmDatabase
 import subprocess
-from multiprocessing import Pool
-import time
-from datetime import datetime
 from libcloud.compute.base import NodeSize
 from libcloud.compute.base import NodeImage
 
 from pprint import pprint
-
-class SimpleNodeProperty():
-    def __init__(self, id):
-        self.id = id
 
 class Provider(LibCloudProvider):
     def __init__(self, name='aws', configuration="~/.cloudmesh/cloudmesh4.yaml"):
@@ -19,15 +12,24 @@ class Provider(LibCloudProvider):
 
     def create(self, name=None, image=None, size=None, location=None,  timeout=360, **kwargs):
         if image == None:
-            image = self.spec["default"]['image']
+            image = self.spec["default"]['flavor']
         if size == None:
             size = self.spec["default"]['size']
 
-        # create image and flavor with property .id
-        # since in ibcloud.compute.providers create_node method, only the .id property of image and size are used
-        # this bypasses having to load NodeSizes and NodeImages
-        image_use = SimpleNodeProperty(id=image)
-        flavor_use = SimpleNodeProperty(id=size)
+        database = CmDatabase()
+        image_dict = database.find(collection='aws-image', name=image)[0]
+        flavor_dict = database.find(collection='aws-flavor', name=size)[0]
+        
+        image_use = NodeImage(id=image_dict['id'],
+                            name=image_dict['name'],
+                            driver=self.driver)
+        flavor_use = NodeSize(id=flavor_dict['id'],
+                            name=flavor_dict['name'],
+                            ram=flavor_dict['ram'],
+                            disk=flavor_dict['disk'],
+                            bandwidth=flavor_dict['bandwidth'],
+                            price=flavor_dict['price'],
+                            driver=self.driver)
 
         node = self.cloudman.create_node(name=name, image=image_use, size=flavor_use, **kwargs)
 
