@@ -26,6 +26,28 @@ class Test_aws:
         cred = conf["cloud"]['aws']["credentials"]
         self.key = (cred['EC2_PRIVATE_KEY_FILE_NAME']).split('.')[0]
 
+    def test_02_run(self):
+        HEADING()
+
+        StopWatch.start("cms vm run dryrun")
+        result = Shell.execute("cms vm run --name=test_boot_01 --username=ubuntu uname", shell=True)
+        StopWatch.stop("cms vm run dryrun")
+
+        VERBOSE(result)
+
+        assert "Linux" in result
+
+    def test_02_script(self):
+        HEADING()
+
+        StopWatch.start("cms vm script dryrun")
+        result = Shell.execute("cms vm script --name=test_boot_01 --username=ubuntu ./test_cms_aws.sh", shell=True)
+        StopWatch.stop("cms vm script dryrun")
+
+        VERBOSE(result)
+
+        assert "Linux" in result
+
     def test_04_stop(self):
         HEADING("this test will fail, press Ctrl-C to skip")
 

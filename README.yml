@@ -13,13 +13,14 @@ section:
       code: https://github.com/cloudmesh/cloudmesh-cloud/blob/master/cloudmesh/common3/Shell.py
       pytest: https://github.com/cloudmesh/cloudmesh-cloud/blob/master/tests/test_ping.py
 project:
-    - title: Libcloud Provider
-      code: https://github.com/cloudmesh/cloudmesh-cloud/blob/master/cloudmesh/compute/libcloud/Provider.py
-      pytest: TBD
-    - title: VM Provider
-      code: https://github.com/cloudmesh/cloudmesh-cloud/blob/master/cloudmesh/compute/vm/Provider.py
-      pytest: TBD
-    - title: VM Command
-      code: https://github.com/cloudmesh/cloudmesh-cloud/blob/master/cloudmesh/vm/command/vm.py
-      pytest: https://github.com/cloudmesh/cloudmesh-cloud/blob/master/tests/test_cms_aws.py
+    - title: AWS VM Management
+      url: https://github.com/cloudmesh/cloudmesh-cloud/blob/master/README.md
+      code1: https://github.com/cloudmesh/cloudmesh-cloud/blob/master/cloudmesh/compute/libcloud/Provider.py
+      code2: https://github.com/cloudmesh/cloudmesh-cloud/blob/master/cloudmesh/compute/vm/Provider.py
+      code3: https://github.com/cloudmesh/cloudmesh-cloud/blob/master/cloudmesh/vm/command/vm.py
+      pytest:
+          - https://github.com/cloudmesh/cloudmesh-cloud/blob/master/tests/test_cms_aws.py
+          - https://github.com/cloudmesh/cloudmesh-cloud/blob/master/tests/test_cms_aws_BUG.py
+      benchmark: https://github.com/cloudmesh/cloudmesh-manual/blob/master/docs-source/source/benchmarks/awsec2-vm-management-benchmark.md
+      doccumentation: https://github.com/cloudmesh/cloudmesh-manual/blob/ab87d221b5dad30b0ba2b804f0a0e087cce7ae39/docs-source/source/accounts/aws.md
     - status: 95%
