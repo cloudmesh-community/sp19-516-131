@@ -1,0 +1,423 @@
+============================= test session starts ==============================
+platform darwin -- Python 3.7.2, pytest-4.4.1, py-1.8.0, pluggy-0.9.0 -- /Users/Huang/.pyenv/versions/3.7.2/envs/ENV3/bin/python3.7
+cachedir: .pytest_cache
+hypothesis profile 'default' -> database=DirectoryBasedExampleDatabase('/Users/Huang/Documents/IU/2019_1_SP/CSCI-E516/cm/cloudmesh-cloud/.hypothesis/examples')
+rootdir: /Users/Huang/Documents/IU/2019_1_SP/CSCI-E516/cm/cloudmesh-cloud, inifile: pytest.ini
+plugins: hypothesis-4.17.1
+collecting ... collected 17 items
+
+tests/test_compute_database.py::Test_Compute_Database::test_banner 
+
+
+
+# ######################################################################
+# START
+# ######################################################################
+
+PASSED
+tests/test_compute_database.py::Test_Compute_Database::test_list_flavors 
+
+
+
+
+# ######################################################################
+# None
+# # test_list_flavors /tests/test_compute_database.py 58
+# ######################################################################
+
+PASSED
+tests/test_compute_database.py::Test_Compute_Database::test_list_nodes 
+
+
+
+
+# ######################################################################
+# None
+# # test_list_nodes /tests/test_compute_database.py 66
+# ######################################################################
+
+PASSED
+tests/test_compute_database.py::Test_Compute_Database::test_list_keys 
+
+
+
+
+# ######################################################################
+# None
+# # test_list_keys /tests/test_compute_database.py 70
+# ######################################################################
+
+ERROR: uploading document {'name': 'aws_cert', 'fingerprint': '2e:c8:4b:1a:ad:6c:b9:9a:b4:fa:65:8a:8f:30:0e:53:1a:fe:cb:a6', 'public_key': None, 'private_key': None, 'cm': {'kind': 'key', 'driver': 'aws', 'cloud': 'aws', 'collection': 'aws-key'}}
+PASSED
+tests/test_compute_database.py::Test_Compute_Database::test_key_upload 
+
+
+
+
+# ######################################################################
+# None
+# # test_key_upload /tests/test_compute_database.py 82
+# ######################################################################
+
+{}
+{'cm': {'cloud': 'aws', 'driver': 'aws', 'kind': 'key'},
+ 'fingerprint': '2e:c8:4b:1a:ad:6c:b9:9a:b4:fa:65:8a:8f:30:0e:53:1a:fe:cb:a6',
+ 'name': 'aws_cert',
+ 'private_key': None,
+ 'public_key': None}
+FAILED
+tests/test_compute_database.py::Test_Compute_Database::test_list_vm 
+
+
+
+
+# ######################################################################
+# None
+# # test_list_vm /tests/test_compute_database.py 105
+# ######################################################################
+
+None
+PASSED
+tests/test_compute_database.py::Test_Compute_Database::test_list_secgroups 
+
+
+
+
+# ######################################################################
+# None
+# # test_list_secgroups /tests/test_compute_database.py 120
+# ######################################################################
+
+FAILED
+tests/test_compute_database.py::Test_Compute_Database::test_secgroups_add 
+
+
+
+
+# ######################################################################
+# None
+# # test_secgroups_add /tests/test_compute_database.py 135
+# ######################################################################
+
+FAILED
+tests/test_compute_database.py::Test_Compute_Database::test_secgroup_rules_add 
+
+
+
+
+# ######################################################################
+# None
+# # test_secgroup_rules_add /tests/test_compute_database.py 140
+# ######################################################################
+
+FAILED
+tests/test_compute_database.py::Test_Compute_Database::test_secgroup_rules_remove 
+
+
+
+
+# ######################################################################
+# None
+# # test_secgroup_rules_remove /tests/test_compute_database.py 146
+# ######################################################################
+
+FAILED
+tests/test_compute_database.py::Test_Compute_Database::test_secgroups_remove 
+
+
+
+
+# ######################################################################
+# None
+# # test_secgroups_remove /tests/test_compute_database.py 152
+# ######################################################################
+
+FAILED
+tests/test_compute_database.py::Test_Compute_Database::test_create 
+
+
+
+
+# ######################################################################
+# None
+# # test_create /tests/test_compute_database.py 157
+# ######################################################################
+
+FAILED
+tests/test_compute_database.py::Test_Compute_Database::test_publicIP_attach 
+
+
+
+
+# ######################################################################
+# None
+# # test_publicIP_attach /tests/test_compute_database.py 181
+# ######################################################################
+
+FAILED
+tests/test_compute_database.py::Test_Compute_Database::test_publicIP_detach 
+
+
+detaching and removing public IP...
+FAILED
+tests/test_compute_database.py::Test_Compute_Database::test_info 
+
+
+
+
+# ######################################################################
+# None
+# # test_info /tests/test_compute_database.py 223
+# ######################################################################
+
+PASSED
+tests/test_compute_database.py::Test_Compute_Database::test_destroy 
+
+
+
+
+# ######################################################################
+# None
+# # test_destroy /tests/test_compute_database.py 227
+# ######################################################################
+
+FAILED
+tests/test_compute_database.py::Test_Compute_Database::test_19_vm_login 
+
+
+
+
+# ######################################################################
+# None
+# # test_list_vm /tests/test_compute_database.py 105
+# ######################################################################
+
+None
+
+
+# ######################################################################
+# None
+# # test_create /tests/test_compute_database.py 157
+# ######################################################################
+
+FAILED
+
+=================================== FAILURES ===================================
+____________________ Test_Compute_Database.test_key_upload _____________________
+
+self = <tests.test_compute_database.Test_Compute_Database object at 0x10d9ffd68>
+
+    def test_key_upload(self):
+        HEADING()
+    
+        key = SSHkey()
+        print(key.__dict__)
+    
+>       self.p.key_upload(key)
+
+tests/test_compute_database.py:88: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+cloudmesh/compute/vm/Provider.py:140: in key_upload
+    self.p.key_upload(key)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <cloudmesh.compute.libcloud.Provider.Provider object at 0x10d9ffb00>
+key = {'profile': {'firstname': 'Jing', 'lastname': 'Huang', 'email': 'hyspoc@gmail.com', 'user': 'hyspoc', 'github': 'https...dhcp-bl.indiana.edu', 'fingerprint': '3d:33:c5:8e:fc:c3:c3:c2:17:f0:4d:0c:68:2f:f5:f2', 'name': 'rsa', 'source': 'ssh'}
+
+    def key_upload(self, key):
+        """
+        uploads the key specified in the yaml configuration to the cloud
+        :param key:
+        :return:
+        """
+    
+        #
+        # TODO: if you have a key in the local machine that is different from an
+        # already uploaded ky this function will fail. The key in the cloud
+        # needs to be removed first
+        #
+        keys = self.keys()
+        for cloudkey in keys:
+            pprint(cloudkey)
+            if cloudkey['fingerprint'] == key["fingerprint"]:
+                return
+    
+        filename = Path(key["path"])
+        key = self.cloudman.import_key_pair_from_file(
+>           "{user}".format(**self.user), filename)
+E       TypeError: format() argument after ** must be a mapping, not str
+
+cloudmesh/compute/libcloud/Provider.py:270: TypeError
+__________________ Test_Compute_Database.test_list_secgroups ___________________
+
+self = <tests.test_compute_database.Test_Compute_Database object at 0x10da184e0>
+
+    def test_list_secgroups(self):
+        HEADING()
+>       secgroups = self.p.list_secgroups()
+E       AttributeError: 'Provider' object has no attribute 'list_secgroups'
+
+tests/test_compute_database.py:122: AttributeError
+___________________ Test_Compute_Database.test_secgroups_add ___________________
+
+self = <tests.test_compute_database.Test_Compute_Database object at 0x10d9ff0b8>
+
+    def test_secgroups_add(self):
+        HEADING()
+>       self.p.add_secgroup(self.secgroupname)
+E       AttributeError: 'Provider' object has no attribute 'add_secgroup'
+
+tests/test_compute_database.py:137: AttributeError
+________________ Test_Compute_Database.test_secgroup_rules_add _________________
+
+self = <tests.test_compute_database.Test_Compute_Database object at 0x10da18f60>
+
+    def test_secgroup_rules_add(self):
+        HEADING()
+        rules = [self.secgrouprule]
+>       self.p.add_rules_to_secgroup(self.secgroupname, rules)
+E       AttributeError: 'Provider' object has no attribute 'add_rules_to_secgroup'
+
+tests/test_compute_database.py:143: AttributeError
+_______________ Test_Compute_Database.test_secgroup_rules_remove _______________
+
+self = <tests.test_compute_database.Test_Compute_Database object at 0x10e426400>
+
+    def test_secgroup_rules_remove(self):
+        HEADING()
+        rules = [self.secgrouprule]
+>       self.p.remove_rules_from_secgroup(self.secgroupname, rules)
+E       AttributeError: 'Provider' object has no attribute 'remove_rules_from_secgroup'
+
+tests/test_compute_database.py:149: AttributeError
+_________________ Test_Compute_Database.test_secgroups_remove __________________
+
+self = <tests.test_compute_database.Test_Compute_Database object at 0x10da0cf28>
+
+    def test_secgroups_remove(self):
+        HEADING()
+>       self.p.remove_secgroup(self.secgroupname)
+E       AttributeError: 'Provider' object has no attribute 'remove_secgroup'
+
+tests/test_compute_database.py:154: AttributeError
+______________________ Test_Compute_Database.test_create _______________________
+
+self = <tests.test_compute_database.Test_Compute_Database object at 0x10e42d908>
+
+    def test_create(self):
+        HEADING()
+        image = "CC-Ubuntu16.04"
+        size = "m1.medium"
+        self.p.create(name=self.name,
+                      image=image,
+                      size=size,
+                      # username as the keypair name based on
+                      # the key implementation logic
+                      ex_keyname=self.user,
+>                     ex_security_groups=['default'])
+
+tests/test_compute_database.py:167: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+cloudmesh/mongo/DataBaseDecorator.py:95: in wrapper
+    current = f(*args, **kwargs)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <cloudmesh.compute.vm.Provider.Provider object at 0x10e42dcf8>
+names = None, image = 'CC-Ubuntu16.04', size = 'm1.medium', timeout = 360
+kwargs = {'ex_keyname': 'hyspoc', 'ex_security_groups': ['default'], 'name': 'exp-grp-hyspoc-vm-1'}
+r = []
+
+    @DatabaseUpdate()
+    def create(self, names=None, image=None, size=None, timeout=360, **kwargs):
+        names = self.expand(names)
+        r = []
+>       for name in names:
+E       TypeError: 'NoneType' object is not iterable
+
+cloudmesh/compute/vm/Provider.py:126: TypeError
+__________________ Test_Compute_Database.test_publicIP_attach __________________
+
+self = <tests.test_compute_database.Test_Compute_Database object at 0x10e4951d0>
+
+    def test_publicIP_attach(self):
+        HEADING()
+>       pubip = self.p.get_publicIP()
+E       AttributeError: 'Provider' object has no attribute 'get_publicIP'
+
+tests/test_compute_database.py:183: AttributeError
+__________________ Test_Compute_Database.test_publicIP_detach __________________
+
+self = <tests.test_compute_database.Test_Compute_Database object at 0x10e43a400>
+
+    def test_publicIP_detach(self):
+        print("detaching and removing public IP...")
+        time.sleep(5)
+>       nodes = self.p.list(raw=True)
+
+tests/test_compute_database.py:199: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+args = (<cloudmesh.compute.vm.Provider.Provider object at 0x10d9b5f60>,)
+kwargs = {'raw': True}
+
+    def wrapper(*args, **kwargs):
+>       current = f(*args, **kwargs)
+E       TypeError: list() got an unexpected keyword argument 'raw'
+
+cloudmesh/mongo/DataBaseDecorator.py:95: TypeError
+______________________ Test_Compute_Database.test_destroy ______________________
+
+self = <tests.test_compute_database.Test_Compute_Database object at 0x10e40e4a8>
+
+    def test_destroy(self):
+        HEADING()
+>       self.p.destroy(names=self.name)
+
+tests/test_compute_database.py:229: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+cloudmesh/mongo/DataBaseDecorator.py:102: in wrapper
+    result = self.database.update(current)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <cloudmesh.mongo.CmDatabase.CmDatabase object at 0x10d9b26a0>
+entries = [None]
+
+    def update(self, entries):
+    
+        result = []
+        for entry in entries:
+    
+>           if 'cm' not in entry:
+E           TypeError: argument of type 'NoneType' is not iterable
+
+cloudmesh/mongo/CmDatabase.py:183: TypeError
+____________________ Test_Compute_Database.test_19_vm_login ____________________
+
+self = <tests.test_compute_database.Test_Compute_Database object at 0x10e49df98>
+
+    def test_19_vm_login(self):
+        self.test_list_vm()
+>       self.test_create()
+
+tests/test_compute_database.py:241: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/test_compute_database.py:167: in test_create
+    ex_security_groups=['default'])
+cloudmesh/mongo/DataBaseDecorator.py:95: in wrapper
+    current = f(*args, **kwargs)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <cloudmesh.compute.vm.Provider.Provider object at 0x10dbfb748>
+names = None, image = 'CC-Ubuntu16.04', size = 'm1.medium', timeout = 360
+kwargs = {'ex_keyname': 'hyspoc', 'ex_security_groups': ['default'], 'name': 'exp-grp-hyspoc-vm-1'}
+r = []
+
+    @DatabaseUpdate()
+    def create(self, names=None, image=None, size=None, timeout=360, **kwargs):
+        names = self.expand(names)
+        r = []
+>       for name in names:
+E       TypeError: 'NoneType' object is not iterable
+
+cloudmesh/compute/vm/Provider.py:126: TypeError
+===================== 11 failed, 6 passed in 9.71 seconds ======================
