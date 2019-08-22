@@ -22,7 +22,7 @@ from cloudmesh.common.StopWatch import StopWatch
 class Test_aws:
 
     def setup(self):
-        conf = Config("~/.cloudmesh/cloudmesh4.yaml")["cloudmesh"]
+        conf = Config("~/.cloudmesh/cloudmesh.yaml")["cloudmesh"]
         cred = conf["cloud"]['aws']["credentials"]
         self.key = (cred['EC2_PRIVATE_KEY_FILE_NAME']).split('.')[0]
 

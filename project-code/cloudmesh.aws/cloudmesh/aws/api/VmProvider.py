@@ -3,7 +3,8 @@ from cloudmesh.compute.vm.Provider import Provider as VmProvider
 import subprocess
 class Provider(VmProvider):
 
-    def __init__(self, name='aws', configuration="~/.cloudmesh/.cloudmesh4.yaml"):
+    def __init__(self, name='aws',
+                 configuration="~/.cloudmesh/.cloudmesh.yaml"):
         super().__init__(name=name, configuration=configuration)
         self.p = LibCloudProvider(name=name, configuration=configuration)
 

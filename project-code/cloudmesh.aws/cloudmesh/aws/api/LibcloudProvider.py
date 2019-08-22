@@ -7,7 +7,7 @@ from libcloud.compute.base import NodeImage
 from pprint import pprint
 
 class Provider(LibCloudProvider):
-    def __init__(self, name='aws', configuration="~/.cloudmesh/cloudmesh4.yaml"):
+    def __init__(self, name='aws', configuration="~/.cloudmesh/cloudmesh.yaml"):
         super().__init__(name=name, configuration=configuration)
 
     # moved to cloudmesh-cloud
